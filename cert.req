@@ -1,0 +1,42 @@
+Certificate Request:
+    Data:
+        Version: 0 (0x0)
+        Subject: C=sg, ST=singapore, L=singapore, O=honestbee, OU=backend, CN=junkai/emailAddress=junkai.yeo@honestbee.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:d2:a8:2f:2e:a0:d4:d6:e2:e1:e1:16:09:9d:24:
+                    d8:4e:cc:f3:1d:33:62:94:9b:f2:ad:3d:c9:ad:20:
+                    d6:cf:84:63:18:f2:5a:1a:d2:34:69:35:4c:93:ce:
+                    9d:f8:6f:b5:8a:2c:8d:a9:65:e7:ce:6e:08:5f:e1:
+                    0d:1d:73:56:9c:3a:00:cf:d4:be:2d:fb:c3:4a:26:
+                    68:59:b2:1a:a6:fd:5a:3f:33:7e:27:4f:21:de:04:
+                    c8:d9:28:e2:de:e0:d0:11:e4:0b:a0:83:8e:e4:a3:
+                    40:b9:3a:08:c1:6f:a9:0a:d1:ad:bf:b7:ab:50:fe:
+                    15:36:b5:51:41:57:f4:b7:f3
+                Exponent: 65537 (0x10001)
+        Attributes:
+            challengePassword        :passwd
+    Signature Algorithm: sha1WithRSAEncryption
+        2e:a3:1b:66:29:21:43:a1:46:d3:01:64:b3:7d:a2:c8:1e:21:
+        ee:9e:fa:99:99:98:8a:61:58:4d:ba:90:32:13:93:3c:33:a6:
+        a7:4b:54:ba:d5:0e:5b:b0:28:f2:86:57:18:2a:e3:41:4c:2b:
+        44:3d:87:d6:d4:e3:84:5a:af:85:59:82:d1:b8:14:80:e1:41:
+        a2:2c:45:72:e7:c2:54:80:44:04:7b:28:b4:be:41:f4:5f:e0:
+        a3:b3:ed:d5:f1:8f:df:ef:8e:ad:1a:89:30:f2:0a:2e:c2:6f:
+        f8:fb:77:05:a2:31:db:8d:99:92:87:06:96:69:36:66:92:f7:
+        48:7d
+-----BEGIN CERTIFICATE REQUEST-----
+MIIB7TCCAVYCAQAwgZUxCzAJBgNVBAYTAnNnMRIwEAYDVQQIEwlzaW5nYXBvcmUx
+EjAQBgNVBAcTCXNpbmdhcG9yZTESMBAGA1UEChMJaG9uZXN0YmVlMRAwDgYDVQQL
+EwdiYWNrZW5kMQ8wDQYDVQQDEwZqdW5rYWkxJzAlBgkqhkiG9w0BCQEWGGp1bmth
+aS55ZW9AaG9uZXN0YmVlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA
+0qgvLqDU1uLh4RYJnSTYTszzHTNilJvyrT3JrSDWz4RjGPJaGtI0aTVMk86d+G+1
+iiyNqWXnzm4IX+ENHXNWnDoAz9S+LfvDSiZoWbIapv1aPzN+J08h3gTI2Sji3uDQ
+EeQLoIOO5KNAuToIwW+pCtGtv7erUP4VNrVRQVf0t/MCAwEAAaAXMBUGCSqGSIb3
+DQEJBzEIEwZwYXNzd2QwDQYJKoZIhvcNAQEFBQADgYEALqMbZikhQ6FG0wFks32i
+yB4h7p76mZmYimFYTbqQMhOTPDOmp0tUutUOW7Ao8oZXGCrjQUwrRD2H1tTjhFqv
+hVmC0bgUgOFBoixFcufCVIBEBHsotL5B9F/go7Pt1fGP3++OrRqJMPIKLsJv+Pt3
+BaIx242ZkocGlmk2ZpL3SH0=
+-----END CERTIFICATE REQUEST-----

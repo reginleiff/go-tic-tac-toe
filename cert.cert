@@ -1,0 +1,66 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            af:8f:b0:22:f1:d1:8b:e4
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=sg, ST=singapore, L=singapore, O=honestbee, OU=backend, CN=junkai/emailAddress=junkai.yeo@honestbee.com
+        Validity
+            Not Before: May 30 08:54:38 2018 GMT
+            Not After : Jun 29 08:54:38 2018 GMT
+        Subject: C=sg, ST=singapore, L=singapore, O=honestbee, OU=backend, CN=junkai/emailAddress=junkai.yeo@honestbee.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:d2:a8:2f:2e:a0:d4:d6:e2:e1:e1:16:09:9d:24:
+                    d8:4e:cc:f3:1d:33:62:94:9b:f2:ad:3d:c9:ad:20:
+                    d6:cf:84:63:18:f2:5a:1a:d2:34:69:35:4c:93:ce:
+                    9d:f8:6f:b5:8a:2c:8d:a9:65:e7:ce:6e:08:5f:e1:
+                    0d:1d:73:56:9c:3a:00:cf:d4:be:2d:fb:c3:4a:26:
+                    68:59:b2:1a:a6:fd:5a:3f:33:7e:27:4f:21:de:04:
+                    c8:d9:28:e2:de:e0:d0:11:e4:0b:a0:83:8e:e4:a3:
+                    40:b9:3a:08:c1:6f:a9:0a:d1:ad:bf:b7:ab:50:fe:
+                    15:36:b5:51:41:57:f4:b7:f3
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                8C:B8:51:96:A0:B6:C7:A3:4E:B6:D1:A4:A7:D0:C3:EF:44:64:F9:6D
+            X509v3 Authority Key Identifier: 
+                keyid:8C:B8:51:96:A0:B6:C7:A3:4E:B6:D1:A4:A7:D0:C3:EF:44:64:F9:6D
+                DirName:/C=sg/ST=singapore/L=singapore/O=honestbee/OU=backend/CN=junkai/emailAddress=junkai.yeo@honestbee.com
+                serial:AF:8F:B0:22:F1:D1:8B:E4
+
+            X509v3 Basic Constraints: 
+                CA:TRUE
+    Signature Algorithm: sha1WithRSAEncryption
+        b4:30:8b:cb:89:7a:38:ab:6b:6d:f6:06:63:33:cd:83:a2:b4:
+        e8:ae:68:be:4f:68:d5:4b:78:a4:32:21:04:07:b6:6a:38:87:
+        2a:7e:7c:6e:fc:4b:69:78:98:3e:65:af:1c:b5:53:86:b7:ec:
+        69:9a:f7:bc:bc:a4:c9:6a:c8:97:8d:17:2b:6a:d2:1d:af:a1:
+        f1:09:af:6e:75:b2:64:df:a2:6d:08:03:ec:06:b2:2d:83:e2:
+        90:22:e5:63:18:f5:51:42:04:19:aa:46:4d:52:11:df:ee:d5:
+        c7:c7:be:7d:38:46:c5:28:6f:cb:05:5e:fd:9b:d5:d7:41:62:
+        c7:4d
+-----BEGIN CERTIFICATE-----
+MIIDqDCCAxGgAwIBAgIJAK+PsCLx0YvkMA0GCSqGSIb3DQEBBQUAMIGVMQswCQYD
+VQQGEwJzZzESMBAGA1UECBMJc2luZ2Fwb3JlMRIwEAYDVQQHEwlzaW5nYXBvcmUx
+EjAQBgNVBAoTCWhvbmVzdGJlZTEQMA4GA1UECxMHYmFja2VuZDEPMA0GA1UEAxMG
+anVua2FpMScwJQYJKoZIhvcNAQkBFhhqdW5rYWkueWVvQGhvbmVzdGJlZS5jb20w
+HhcNMTgwNTMwMDg1NDM4WhcNMTgwNjI5MDg1NDM4WjCBlTELMAkGA1UEBhMCc2cx
+EjAQBgNVBAgTCXNpbmdhcG9yZTESMBAGA1UEBxMJc2luZ2Fwb3JlMRIwEAYDVQQK
+Ewlob25lc3RiZWUxEDAOBgNVBAsTB2JhY2tlbmQxDzANBgNVBAMTBmp1bmthaTEn
+MCUGCSqGSIb3DQEJARYYanVua2FpLnllb0Bob25lc3RiZWUuY29tMIGfMA0GCSqG
+SIb3DQEBAQUAA4GNADCBiQKBgQDSqC8uoNTW4uHhFgmdJNhOzPMdM2KUm/KtPcmt
+INbPhGMY8loa0jRpNUyTzp34b7WKLI2pZefObghf4Q0dc1acOgDP1L4t+8NKJmhZ
+shqm/Vo/M34nTyHeBMjZKOLe4NAR5Augg47ko0C5OgjBb6kK0a2/t6tQ/hU2tVFB
+V/S38wIDAQABo4H9MIH6MB0GA1UdDgQWBBSMuFGWoLbHo0620aSn0MPvRGT5bTCB
+ygYDVR0jBIHCMIG/gBSMuFGWoLbHo0620aSn0MPvRGT5baGBm6SBmDCBlTELMAkG
+A1UEBhMCc2cxEjAQBgNVBAgTCXNpbmdhcG9yZTESMBAGA1UEBxMJc2luZ2Fwb3Jl
+MRIwEAYDVQQKEwlob25lc3RiZWUxEDAOBgNVBAsTB2JhY2tlbmQxDzANBgNVBAMT
+Bmp1bmthaTEnMCUGCSqGSIb3DQEJARYYanVua2FpLnllb0Bob25lc3RiZWUuY29t
+ggkAr4+wIvHRi+QwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQC0MIvL
+iXo4q2tt9gZjM82DorTormi+T2jVS3ikMiEEB7ZqOIcqfnxu/EtpeJg+Za8ctVOG
+t+xpmve8vKTJasiXjRcratIdr6HxCa9udbJk36JtCAPsBrItg+KQIuVjGPVRQgQZ
+qkZNUhHf7tXHx759OEbFKG/LBV79m9XXQWLHTQ==
+-----END CERTIFICATE-----
