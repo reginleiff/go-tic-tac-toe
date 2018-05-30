@@ -1,0 +1,8 @@
+test:
+  driver: postgres
+  open: user=postgres dbname=ttc_test sslmode=disable
+        
+development:
+  driver: postgres 
+  open: user=postgres dbname=ttc_dev sslmode=disable
+
