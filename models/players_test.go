@@ -536,7 +536,7 @@ func testPlayerToManyRoomPlayers(t *testing.T) {
 	}
 }
 
-func testPlayerToManyCapturedByTiles(t *testing.T) {
+func testPlayerToManyTiles(t *testing.T) {
 	var err error
 	tx := MustTx(boil.Begin())
 	defer tx.Rollback()
@@ -556,10 +556,10 @@ func testPlayerToManyCapturedByTiles(t *testing.T) {
 	randomize.Struct(seed, &b, tileDBTypes, false, tileColumnsWithDefault...)
 	randomize.Struct(seed, &c, tileDBTypes, false, tileColumnsWithDefault...)
 
-	b.CapturedBy.Valid = true
-	c.CapturedBy.Valid = true
-	b.CapturedBy.Int = a.ID
-	c.CapturedBy.Int = a.ID
+	b.PlayerID.Valid = true
+	c.PlayerID.Valid = true
+	b.PlayerID.Int = a.ID
+	c.PlayerID.Int = a.ID
 	if err = b.Insert(tx); err != nil {
 		t.Fatal(err)
 	}
@@ -567,17 +567,17 @@ func testPlayerToManyCapturedByTiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tile, err := a.CapturedByTiles(tx).All()
+	tile, err := a.Tiles(tx).All()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	bFound, cFound := false, false
 	for _, v := range tile {
-		if v.CapturedBy.Int == b.CapturedBy.Int {
+		if v.PlayerID.Int == b.PlayerID.Int {
 			bFound = true
 		}
-		if v.CapturedBy.Int == c.CapturedBy.Int {
+		if v.PlayerID.Int == c.PlayerID.Int {
 			cFound = true
 		}
 	}
@@ -590,18 +590,18 @@ func testPlayerToManyCapturedByTiles(t *testing.T) {
 	}
 
 	slice := PlayerSlice{&a}
-	if err = a.L.LoadCapturedByTiles(tx, false, (*[]*Player)(&slice)); err != nil {
+	if err = a.L.LoadTiles(tx, false, (*[]*Player)(&slice)); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(a.R.CapturedByTiles); got != 2 {
+	if got := len(a.R.Tiles); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
-	a.R.CapturedByTiles = nil
-	if err = a.L.LoadCapturedByTiles(tx, true, &a); err != nil {
+	a.R.Tiles = nil
+	if err = a.L.LoadTiles(tx, true, &a); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(a.R.CapturedByTiles); got != 2 {
+	if got := len(a.R.Tiles); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
@@ -858,7 +858,7 @@ func testPlayerToManyRemoveOpRoomPlayers(t *testing.T) {
 	}
 }
 
-func testPlayerToManyAddOpCapturedByTiles(t *testing.T) {
+func testPlayerToManyAddOpTiles(t *testing.T) {
 	var err error
 
 	tx := MustTx(boil.Begin())
@@ -894,7 +894,7 @@ func testPlayerToManyAddOpCapturedByTiles(t *testing.T) {
 	}
 
 	for i, x := range foreignersSplitByInsertion {
-		err = a.AddCapturedByTiles(tx, i != 0, x...)
+		err = a.AddTiles(tx, i != 0, x...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -902,28 +902,28 @@ func testPlayerToManyAddOpCapturedByTiles(t *testing.T) {
 		first := x[0]
 		second := x[1]
 
-		if a.ID != first.CapturedBy.Int {
-			t.Error("foreign key was wrong value", a.ID, first.CapturedBy.Int)
+		if a.ID != first.PlayerID.Int {
+			t.Error("foreign key was wrong value", a.ID, first.PlayerID.Int)
 		}
-		if a.ID != second.CapturedBy.Int {
-			t.Error("foreign key was wrong value", a.ID, second.CapturedBy.Int)
+		if a.ID != second.PlayerID.Int {
+			t.Error("foreign key was wrong value", a.ID, second.PlayerID.Int)
 		}
 
-		if first.R.CapturedBy != &a {
+		if first.R.Player != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
-		if second.R.CapturedBy != &a {
+		if second.R.Player != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
 
-		if a.R.CapturedByTiles[i*2] != first {
+		if a.R.Tiles[i*2] != first {
 			t.Error("relationship struct slice not set to correct value")
 		}
-		if a.R.CapturedByTiles[i*2+1] != second {
+		if a.R.Tiles[i*2+1] != second {
 			t.Error("relationship struct slice not set to correct value")
 		}
 
-		count, err := a.CapturedByTiles(tx).Count()
+		count, err := a.Tiles(tx).Count()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -933,7 +933,7 @@ func testPlayerToManyAddOpCapturedByTiles(t *testing.T) {
 	}
 }
 
-func testPlayerToManySetOpCapturedByTiles(t *testing.T) {
+func testPlayerToManySetOpTiles(t *testing.T) {
 	var err error
 
 	tx := MustTx(boil.Begin())
@@ -963,25 +963,12 @@ func testPlayerToManySetOpCapturedByTiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = a.SetCapturedByTiles(tx, false, &b, &c)
+	err = a.SetTiles(tx, false, &b, &c)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err := a.CapturedByTiles(tx).Count()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 2 {
-		t.Error("count was wrong:", count)
-	}
-
-	err = a.SetCapturedByTiles(tx, true, &d, &e)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	count, err = a.CapturedByTiles(tx).Count()
+	count, err := a.Tiles(tx).Count()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -989,41 +976,54 @@ func testPlayerToManySetOpCapturedByTiles(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	if b.CapturedBy.Valid {
+	err = a.SetTiles(tx, true, &d, &e)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err = a.Tiles(tx).Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	if b.PlayerID.Valid {
 		t.Error("want b's foreign key value to be nil")
 	}
-	if c.CapturedBy.Valid {
+	if c.PlayerID.Valid {
 		t.Error("want c's foreign key value to be nil")
 	}
-	if a.ID != d.CapturedBy.Int {
-		t.Error("foreign key was wrong value", a.ID, d.CapturedBy.Int)
+	if a.ID != d.PlayerID.Int {
+		t.Error("foreign key was wrong value", a.ID, d.PlayerID.Int)
 	}
-	if a.ID != e.CapturedBy.Int {
-		t.Error("foreign key was wrong value", a.ID, e.CapturedBy.Int)
-	}
-
-	if b.R.CapturedBy != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
-	}
-	if c.R.CapturedBy != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
-	}
-	if d.R.CapturedBy != &a {
-		t.Error("relationship was not added properly to the foreign struct")
-	}
-	if e.R.CapturedBy != &a {
-		t.Error("relationship was not added properly to the foreign struct")
+	if a.ID != e.PlayerID.Int {
+		t.Error("foreign key was wrong value", a.ID, e.PlayerID.Int)
 	}
 
-	if a.R.CapturedByTiles[0] != &d {
+	if b.R.Player != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if c.R.Player != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if d.R.Player != &a {
+		t.Error("relationship was not added properly to the foreign struct")
+	}
+	if e.R.Player != &a {
+		t.Error("relationship was not added properly to the foreign struct")
+	}
+
+	if a.R.Tiles[0] != &d {
 		t.Error("relationship struct slice not set to correct value")
 	}
-	if a.R.CapturedByTiles[1] != &e {
+	if a.R.Tiles[1] != &e {
 		t.Error("relationship struct slice not set to correct value")
 	}
 }
 
-func testPlayerToManyRemoveOpCapturedByTiles(t *testing.T) {
+func testPlayerToManyRemoveOpTiles(t *testing.T) {
 	var err error
 
 	tx := MustTx(boil.Begin())
@@ -1047,12 +1047,12 @@ func testPlayerToManyRemoveOpCapturedByTiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = a.AddCapturedByTiles(tx, true, foreigners...)
+	err = a.AddTiles(tx, true, foreigners...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err := a.CapturedByTiles(tx).Count()
+	count, err := a.Tiles(tx).Count()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1060,12 +1060,12 @@ func testPlayerToManyRemoveOpCapturedByTiles(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	err = a.RemoveCapturedByTiles(tx, foreigners[:2]...)
+	err = a.RemoveTiles(tx, foreigners[:2]...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err = a.CapturedByTiles(tx).Count()
+	count, err = a.Tiles(tx).Count()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1073,35 +1073,35 @@ func testPlayerToManyRemoveOpCapturedByTiles(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	if b.CapturedBy.Valid {
+	if b.PlayerID.Valid {
 		t.Error("want b's foreign key value to be nil")
 	}
-	if c.CapturedBy.Valid {
+	if c.PlayerID.Valid {
 		t.Error("want c's foreign key value to be nil")
 	}
 
-	if b.R.CapturedBy != nil {
+	if b.R.Player != nil {
 		t.Error("relationship was not removed properly from the foreign struct")
 	}
-	if c.R.CapturedBy != nil {
+	if c.R.Player != nil {
 		t.Error("relationship was not removed properly from the foreign struct")
 	}
-	if d.R.CapturedBy != &a {
+	if d.R.Player != &a {
 		t.Error("relationship to a should have been preserved")
 	}
-	if e.R.CapturedBy != &a {
+	if e.R.Player != &a {
 		t.Error("relationship to a should have been preserved")
 	}
 
-	if len(a.R.CapturedByTiles) != 2 {
+	if len(a.R.Tiles) != 2 {
 		t.Error("should have preserved two relationships")
 	}
 
 	// Removal doesn't do a stable deletion for performance so we have to flip the order
-	if a.R.CapturedByTiles[1] != &d {
+	if a.R.Tiles[1] != &d {
 		t.Error("relationship to d should have been preserved")
 	}
-	if a.R.CapturedByTiles[0] != &e {
+	if a.R.Tiles[0] != &e {
 		t.Error("relationship to e should have been preserved")
 	}
 }

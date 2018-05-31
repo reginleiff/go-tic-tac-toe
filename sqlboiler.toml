@@ -1,3 +1,4 @@
+blacklist=["goose_db_version"]
 [postgres]
   dbname = "ttc_dev"
   host = "localhost"

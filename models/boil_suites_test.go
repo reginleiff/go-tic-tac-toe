@@ -13,7 +13,6 @@ import "testing"
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
 	t.Run("Boards", testBoards)
-	t.Run("GooseDBVersions", testGooseDBVersions)
 	t.Run("Players", testPlayers)
 	t.Run("Rooms", testRooms)
 	t.Run("Tiles", testTiles)
@@ -21,7 +20,6 @@ func TestParent(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	t.Run("Boards", testBoardsDelete)
-	t.Run("GooseDBVersions", testGooseDBVersionsDelete)
 	t.Run("Players", testPlayersDelete)
 	t.Run("Rooms", testRoomsDelete)
 	t.Run("Tiles", testTilesDelete)
@@ -29,7 +27,6 @@ func TestDelete(t *testing.T) {
 
 func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Boards", testBoardsQueryDeleteAll)
-	t.Run("GooseDBVersions", testGooseDBVersionsQueryDeleteAll)
 	t.Run("Players", testPlayersQueryDeleteAll)
 	t.Run("Rooms", testRoomsQueryDeleteAll)
 	t.Run("Tiles", testTilesQueryDeleteAll)
@@ -37,7 +34,6 @@ func TestQueryDeleteAll(t *testing.T) {
 
 func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Boards", testBoardsSliceDeleteAll)
-	t.Run("GooseDBVersions", testGooseDBVersionsSliceDeleteAll)
 	t.Run("Players", testPlayersSliceDeleteAll)
 	t.Run("Rooms", testRoomsSliceDeleteAll)
 	t.Run("Tiles", testTilesSliceDeleteAll)
@@ -45,7 +41,6 @@ func TestSliceDeleteAll(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	t.Run("Boards", testBoardsExists)
-	t.Run("GooseDBVersions", testGooseDBVersionsExists)
 	t.Run("Players", testPlayersExists)
 	t.Run("Rooms", testRoomsExists)
 	t.Run("Tiles", testTilesExists)
@@ -53,7 +48,6 @@ func TestExists(t *testing.T) {
 
 func TestFind(t *testing.T) {
 	t.Run("Boards", testBoardsFind)
-	t.Run("GooseDBVersions", testGooseDBVersionsFind)
 	t.Run("Players", testPlayersFind)
 	t.Run("Rooms", testRoomsFind)
 	t.Run("Tiles", testTilesFind)
@@ -61,7 +55,6 @@ func TestFind(t *testing.T) {
 
 func TestBind(t *testing.T) {
 	t.Run("Boards", testBoardsBind)
-	t.Run("GooseDBVersions", testGooseDBVersionsBind)
 	t.Run("Players", testPlayersBind)
 	t.Run("Rooms", testRoomsBind)
 	t.Run("Tiles", testTilesBind)
@@ -69,7 +62,6 @@ func TestBind(t *testing.T) {
 
 func TestOne(t *testing.T) {
 	t.Run("Boards", testBoardsOne)
-	t.Run("GooseDBVersions", testGooseDBVersionsOne)
 	t.Run("Players", testPlayersOne)
 	t.Run("Rooms", testRoomsOne)
 	t.Run("Tiles", testTilesOne)
@@ -77,7 +69,6 @@ func TestOne(t *testing.T) {
 
 func TestAll(t *testing.T) {
 	t.Run("Boards", testBoardsAll)
-	t.Run("GooseDBVersions", testGooseDBVersionsAll)
 	t.Run("Players", testPlayersAll)
 	t.Run("Rooms", testRoomsAll)
 	t.Run("Tiles", testTilesAll)
@@ -85,7 +76,6 @@ func TestAll(t *testing.T) {
 
 func TestCount(t *testing.T) {
 	t.Run("Boards", testBoardsCount)
-	t.Run("GooseDBVersions", testGooseDBVersionsCount)
 	t.Run("Players", testPlayersCount)
 	t.Run("Rooms", testRoomsCount)
 	t.Run("Tiles", testTilesCount)
@@ -93,7 +83,6 @@ func TestCount(t *testing.T) {
 
 func TestHooks(t *testing.T) {
 	t.Run("Boards", testBoardsHooks)
-	t.Run("GooseDBVersions", testGooseDBVersionsHooks)
 	t.Run("Players", testPlayersHooks)
 	t.Run("Rooms", testRoomsHooks)
 	t.Run("Tiles", testTilesHooks)
@@ -102,8 +91,6 @@ func TestHooks(t *testing.T) {
 func TestInsert(t *testing.T) {
 	t.Run("Boards", testBoardsInsert)
 	t.Run("Boards", testBoardsInsertWhitelist)
-	t.Run("GooseDBVersions", testGooseDBVersionsInsert)
-	t.Run("GooseDBVersions", testGooseDBVersionsInsertWhitelist)
 	t.Run("Players", testPlayersInsert)
 	t.Run("Players", testPlayersInsertWhitelist)
 	t.Run("Rooms", testRoomsInsert)
@@ -118,7 +105,7 @@ func TestToOne(t *testing.T) {
 	t.Run("PlayerToPlayerUsingRoom", testPlayerToOnePlayerUsingRoom)
 	t.Run("RoomToBoardUsingBoard", testRoomToOneBoardUsingBoard)
 	t.Run("TileToBoardUsingBoard", testTileToOneBoardUsingBoard)
-	t.Run("TileToPlayerUsingCapturedBy", testTileToOnePlayerUsingCapturedBy)
+	t.Run("TileToPlayerUsingPlayer", testTileToOnePlayerUsingPlayer)
 }
 
 // TestOneToOne tests cannot be run in parallel
@@ -131,7 +118,7 @@ func TestToMany(t *testing.T) {
 	t.Run("BoardToRooms", testBoardToManyRooms)
 	t.Run("BoardToTiles", testBoardToManyTiles)
 	t.Run("PlayerToRoomPlayers", testPlayerToManyRoomPlayers)
-	t.Run("PlayerToCapturedByTiles", testPlayerToManyCapturedByTiles)
+	t.Run("PlayerToTiles", testPlayerToManyTiles)
 }
 
 // TestToOneSet tests cannot be run in parallel
@@ -140,14 +127,14 @@ func TestToOneSet(t *testing.T) {
 	t.Run("PlayerToPlayerUsingRoom", testPlayerToOneSetOpPlayerUsingRoom)
 	t.Run("RoomToBoardUsingBoard", testRoomToOneSetOpBoardUsingBoard)
 	t.Run("TileToBoardUsingBoard", testTileToOneSetOpBoardUsingBoard)
-	t.Run("TileToPlayerUsingCapturedBy", testTileToOneSetOpPlayerUsingCapturedBy)
+	t.Run("TileToPlayerUsingPlayer", testTileToOneSetOpPlayerUsingPlayer)
 }
 
 // TestToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOneRemove(t *testing.T) {
 	t.Run("PlayerToPlayerUsingRoom", testPlayerToOneRemoveOpPlayerUsingRoom)
-	t.Run("TileToPlayerUsingCapturedBy", testTileToOneRemoveOpPlayerUsingCapturedBy)
+	t.Run("TileToPlayerUsingPlayer", testTileToOneRemoveOpPlayerUsingPlayer)
 }
 
 // TestOneToOneSet tests cannot be run in parallel
@@ -164,26 +151,25 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("BoardToRooms", testBoardToManyAddOpRooms)
 	t.Run("BoardToTiles", testBoardToManyAddOpTiles)
 	t.Run("PlayerToRoomPlayers", testPlayerToManyAddOpRoomPlayers)
-	t.Run("PlayerToCapturedByTiles", testPlayerToManyAddOpCapturedByTiles)
+	t.Run("PlayerToTiles", testPlayerToManyAddOpTiles)
 }
 
 // TestToManySet tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManySet(t *testing.T) {
 	t.Run("PlayerToRoomPlayers", testPlayerToManySetOpRoomPlayers)
-	t.Run("PlayerToCapturedByTiles", testPlayerToManySetOpCapturedByTiles)
+	t.Run("PlayerToTiles", testPlayerToManySetOpTiles)
 }
 
 // TestToManyRemove tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManyRemove(t *testing.T) {
 	t.Run("PlayerToRoomPlayers", testPlayerToManyRemoveOpRoomPlayers)
-	t.Run("PlayerToCapturedByTiles", testPlayerToManyRemoveOpCapturedByTiles)
+	t.Run("PlayerToTiles", testPlayerToManyRemoveOpTiles)
 }
 
 func TestReload(t *testing.T) {
 	t.Run("Boards", testBoardsReload)
-	t.Run("GooseDBVersions", testGooseDBVersionsReload)
 	t.Run("Players", testPlayersReload)
 	t.Run("Rooms", testRoomsReload)
 	t.Run("Tiles", testTilesReload)
@@ -191,7 +177,6 @@ func TestReload(t *testing.T) {
 
 func TestReloadAll(t *testing.T) {
 	t.Run("Boards", testBoardsReloadAll)
-	t.Run("GooseDBVersions", testGooseDBVersionsReloadAll)
 	t.Run("Players", testPlayersReloadAll)
 	t.Run("Rooms", testRoomsReloadAll)
 	t.Run("Tiles", testTilesReloadAll)
@@ -199,7 +184,6 @@ func TestReloadAll(t *testing.T) {
 
 func TestSelect(t *testing.T) {
 	t.Run("Boards", testBoardsSelect)
-	t.Run("GooseDBVersions", testGooseDBVersionsSelect)
 	t.Run("Players", testPlayersSelect)
 	t.Run("Rooms", testRoomsSelect)
 	t.Run("Tiles", testTilesSelect)
@@ -207,7 +191,6 @@ func TestSelect(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	t.Run("Boards", testBoardsUpdate)
-	t.Run("GooseDBVersions", testGooseDBVersionsUpdate)
 	t.Run("Players", testPlayersUpdate)
 	t.Run("Rooms", testRoomsUpdate)
 	t.Run("Tiles", testTilesUpdate)
@@ -215,7 +198,6 @@ func TestUpdate(t *testing.T) {
 
 func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Boards", testBoardsSliceUpdateAll)
-	t.Run("GooseDBVersions", testGooseDBVersionsSliceUpdateAll)
 	t.Run("Players", testPlayersSliceUpdateAll)
 	t.Run("Rooms", testRoomsSliceUpdateAll)
 	t.Run("Tiles", testTilesSliceUpdateAll)
@@ -223,7 +205,6 @@ func TestSliceUpdateAll(t *testing.T) {
 
 func TestUpsert(t *testing.T) {
 	t.Run("Boards", testBoardsUpsert)
-	t.Run("GooseDBVersions", testGooseDBVersionsUpsert)
 	t.Run("Players", testPlayersUpsert)
 	t.Run("Rooms", testRoomsUpsert)
 	t.Run("Tiles", testTilesUpsert)

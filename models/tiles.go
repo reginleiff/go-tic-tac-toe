@@ -22,42 +22,42 @@ import (
 
 // Tile is an object representing the database table.
 type Tile struct {
-	ID         int       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	BoardID    int       `boil:"board_id" json:"board_id" toml:"board_id" yaml:"board_id"`
-	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt  time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	CapturedBy null.Int  `boil:"captured_by" json:"captured_by,omitempty" toml:"captured_by" yaml:"captured_by,omitempty"`
+	ID        int       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	BoardID   int       `boil:"board_id" json:"board_id" toml:"board_id" yaml:"board_id"`
+	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	PlayerID  null.Int  `boil:"player_id" json:"player_id,omitempty" toml:"player_id" yaml:"player_id,omitempty"`
 
 	R *tileR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L tileL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var TileColumns = struct {
-	ID         string
-	BoardID    string
-	CreatedAt  string
-	UpdatedAt  string
-	CapturedBy string
+	ID        string
+	BoardID   string
+	CreatedAt string
+	UpdatedAt string
+	PlayerID  string
 }{
-	ID:         "id",
-	BoardID:    "board_id",
-	CreatedAt:  "created_at",
-	UpdatedAt:  "updated_at",
-	CapturedBy: "captured_by",
+	ID:        "id",
+	BoardID:   "board_id",
+	CreatedAt: "created_at",
+	UpdatedAt: "updated_at",
+	PlayerID:  "player_id",
 }
 
 // tileR is where relationships are stored.
 type tileR struct {
-	Board      *Board
-	CapturedBy *Player
+	Board  *Board
+	Player *Player
 }
 
 // tileL is where Load methods for each relationship are stored.
 type tileL struct{}
 
 var (
-	tileColumns               = []string{"id", "board_id", "created_at", "updated_at", "captured_by"}
-	tileColumnsWithoutDefault = []string{"board_id", "created_at", "updated_at", "captured_by"}
+	tileColumns               = []string{"id", "board_id", "created_at", "updated_at", "player_id"}
+	tileColumnsWithoutDefault = []string{"board_id", "created_at", "updated_at", "player_id"}
 	tileColumnsWithDefault    = []string{"id"}
 	tilePrimaryKeyColumns     = []string{"id"}
 )
@@ -357,15 +357,15 @@ func (o *Tile) Board(exec boil.Executor, mods ...qm.QueryMod) boardQuery {
 	return query
 }
 
-// CapturedByG pointed to by the foreign key.
-func (o *Tile) CapturedByG(mods ...qm.QueryMod) playerQuery {
-	return o.CapturedBy(boil.GetDB(), mods...)
+// PlayerG pointed to by the foreign key.
+func (o *Tile) PlayerG(mods ...qm.QueryMod) playerQuery {
+	return o.Player(boil.GetDB(), mods...)
 }
 
-// CapturedBy pointed to by the foreign key.
-func (o *Tile) CapturedBy(exec boil.Executor, mods ...qm.QueryMod) playerQuery {
+// Player pointed to by the foreign key.
+func (o *Tile) Player(exec boil.Executor, mods ...qm.QueryMod) playerQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("id=?", o.CapturedBy),
+		qm.Where("id=?", o.PlayerID),
 	}
 
 	queryMods = append(queryMods, mods...)
@@ -452,9 +452,9 @@ func (tileL) LoadBoard(e boil.Executor, singular bool, maybeTile interface{}) er
 	return nil
 }
 
-// LoadCapturedBy allows an eager lookup of values, cached into the
+// LoadPlayer allows an eager lookup of values, cached into the
 // loaded structs of the objects.
-func (tileL) LoadCapturedBy(e boil.Executor, singular bool, maybeTile interface{}) error {
+func (tileL) LoadPlayer(e boil.Executor, singular bool, maybeTile interface{}) error {
 	var slice []*Tile
 	var object *Tile
 
@@ -471,13 +471,13 @@ func (tileL) LoadCapturedBy(e boil.Executor, singular bool, maybeTile interface{
 		if object.R == nil {
 			object.R = &tileR{}
 		}
-		args[0] = object.CapturedBy
+		args[0] = object.PlayerID
 	} else {
 		for i, obj := range slice {
 			if obj.R == nil {
 				obj.R = &tileR{}
 			}
-			args[i] = obj.CapturedBy
+			args[i] = obj.PlayerID
 		}
 	}
 
@@ -514,14 +514,14 @@ func (tileL) LoadCapturedBy(e boil.Executor, singular bool, maybeTile interface{
 	}
 
 	if singular {
-		object.R.CapturedBy = resultSlice[0]
+		object.R.Player = resultSlice[0]
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.CapturedBy.Int == foreign.ID {
-				local.R.CapturedBy = foreign
+			if local.PlayerID.Int == foreign.ID {
+				local.R.Player = foreign
 				break
 			}
 		}
@@ -606,38 +606,38 @@ func (o *Tile) SetBoard(exec boil.Executor, insert bool, related *Board) error {
 	return nil
 }
 
-// SetCapturedByG of the tile to the related item.
-// Sets o.R.CapturedBy to related.
-// Adds o to related.R.CapturedByTiles.
+// SetPlayerG of the tile to the related item.
+// Sets o.R.Player to related.
+// Adds o to related.R.Tiles.
 // Uses the global database handle.
-func (o *Tile) SetCapturedByG(insert bool, related *Player) error {
-	return o.SetCapturedBy(boil.GetDB(), insert, related)
+func (o *Tile) SetPlayerG(insert bool, related *Player) error {
+	return o.SetPlayer(boil.GetDB(), insert, related)
 }
 
-// SetCapturedByP of the tile to the related item.
-// Sets o.R.CapturedBy to related.
-// Adds o to related.R.CapturedByTiles.
+// SetPlayerP of the tile to the related item.
+// Sets o.R.Player to related.
+// Adds o to related.R.Tiles.
 // Panics on error.
-func (o *Tile) SetCapturedByP(exec boil.Executor, insert bool, related *Player) {
-	if err := o.SetCapturedBy(exec, insert, related); err != nil {
+func (o *Tile) SetPlayerP(exec boil.Executor, insert bool, related *Player) {
+	if err := o.SetPlayer(exec, insert, related); err != nil {
 		panic(boil.WrapErr(err))
 	}
 }
 
-// SetCapturedByGP of the tile to the related item.
-// Sets o.R.CapturedBy to related.
-// Adds o to related.R.CapturedByTiles.
+// SetPlayerGP of the tile to the related item.
+// Sets o.R.Player to related.
+// Adds o to related.R.Tiles.
 // Uses the global database handle and panics on error.
-func (o *Tile) SetCapturedByGP(insert bool, related *Player) {
-	if err := o.SetCapturedBy(boil.GetDB(), insert, related); err != nil {
+func (o *Tile) SetPlayerGP(insert bool, related *Player) {
+	if err := o.SetPlayer(boil.GetDB(), insert, related); err != nil {
 		panic(boil.WrapErr(err))
 	}
 }
 
-// SetCapturedBy of the tile to the related item.
-// Sets o.R.CapturedBy to related.
-// Adds o to related.R.CapturedByTiles.
-func (o *Tile) SetCapturedBy(exec boil.Executor, insert bool, related *Player) error {
+// SetPlayer of the tile to the related item.
+// Sets o.R.Player to related.
+// Adds o to related.R.Tiles.
+func (o *Tile) SetPlayer(exec boil.Executor, insert bool, related *Player) error {
 	var err error
 	if insert {
 		if err = related.Insert(exec); err != nil {
@@ -647,7 +647,7 @@ func (o *Tile) SetCapturedBy(exec boil.Executor, insert bool, related *Player) e
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"tiles\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"captured_by"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"player_id"}),
 		strmangle.WhereClause("\"", "\"", 2, tilePrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -661,83 +661,83 @@ func (o *Tile) SetCapturedBy(exec boil.Executor, insert bool, related *Player) e
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.CapturedBy.Int = related.ID
-	o.CapturedBy.Valid = true
+	o.PlayerID.Int = related.ID
+	o.PlayerID.Valid = true
 
 	if o.R == nil {
 		o.R = &tileR{
-			CapturedBy: related,
+			Player: related,
 		}
 	} else {
-		o.R.CapturedBy = related
+		o.R.Player = related
 	}
 
 	if related.R == nil {
 		related.R = &playerR{
-			CapturedByTiles: TileSlice{o},
+			Tiles: TileSlice{o},
 		}
 	} else {
-		related.R.CapturedByTiles = append(related.R.CapturedByTiles, o)
+		related.R.Tiles = append(related.R.Tiles, o)
 	}
 
 	return nil
 }
 
-// RemoveCapturedByG relationship.
-// Sets o.R.CapturedBy to nil.
+// RemovePlayerG relationship.
+// Sets o.R.Player to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Uses the global database handle.
-func (o *Tile) RemoveCapturedByG(related *Player) error {
-	return o.RemoveCapturedBy(boil.GetDB(), related)
+func (o *Tile) RemovePlayerG(related *Player) error {
+	return o.RemovePlayer(boil.GetDB(), related)
 }
 
-// RemoveCapturedByP relationship.
-// Sets o.R.CapturedBy to nil.
+// RemovePlayerP relationship.
+// Sets o.R.Player to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Panics on error.
-func (o *Tile) RemoveCapturedByP(exec boil.Executor, related *Player) {
-	if err := o.RemoveCapturedBy(exec, related); err != nil {
+func (o *Tile) RemovePlayerP(exec boil.Executor, related *Player) {
+	if err := o.RemovePlayer(exec, related); err != nil {
 		panic(boil.WrapErr(err))
 	}
 }
 
-// RemoveCapturedByGP relationship.
-// Sets o.R.CapturedBy to nil.
+// RemovePlayerGP relationship.
+// Sets o.R.Player to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Uses the global database handle and panics on error.
-func (o *Tile) RemoveCapturedByGP(related *Player) {
-	if err := o.RemoveCapturedBy(boil.GetDB(), related); err != nil {
+func (o *Tile) RemovePlayerGP(related *Player) {
+	if err := o.RemovePlayer(boil.GetDB(), related); err != nil {
 		panic(boil.WrapErr(err))
 	}
 }
 
-// RemoveCapturedBy relationship.
-// Sets o.R.CapturedBy to nil.
+// RemovePlayer relationship.
+// Sets o.R.Player to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
-func (o *Tile) RemoveCapturedBy(exec boil.Executor, related *Player) error {
+func (o *Tile) RemovePlayer(exec boil.Executor, related *Player) error {
 	var err error
 
-	o.CapturedBy.Valid = false
-	if err = o.Update(exec, "captured_by"); err != nil {
-		o.CapturedBy.Valid = true
+	o.PlayerID.Valid = false
+	if err = o.Update(exec, "player_id"); err != nil {
+		o.PlayerID.Valid = true
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.R.CapturedBy = nil
+	o.R.Player = nil
 	if related == nil || related.R == nil {
 		return nil
 	}
 
-	for i, ri := range related.R.CapturedByTiles {
-		if o.CapturedBy.Int != ri.CapturedBy.Int {
+	for i, ri := range related.R.Tiles {
+		if o.PlayerID.Int != ri.PlayerID.Int {
 			continue
 		}
 
-		ln := len(related.R.CapturedByTiles)
+		ln := len(related.R.Tiles)
 		if ln > 1 && i < ln-1 {
-			related.R.CapturedByTiles[i] = related.R.CapturedByTiles[ln-1]
+			related.R.Tiles[i] = related.R.Tiles[ln-1]
 		}
-		related.R.CapturedByTiles = related.R.CapturedByTiles[:ln-1]
+		related.R.Tiles = related.R.Tiles[:ln-1]
 		break
 	}
 	return nil

@@ -35,12 +35,12 @@ CREATE TABLE tiles (
 	board_id	INT		NOT NULL,
 	created_at	TIMESTAMP	NOT NULL,
 	updated_at	TIMESTAMP	NOT NULL,
-	captured_by	INT			,
+	player_id	INT			,
 
 	FOREIGN KEY (board_id)
 		REFERENCES boards(id),
 
-	FOREIGN KEY (captured_by)
+	FOREIGN KEY (player_id)
 		REFERENCES players(id) 
 );
 

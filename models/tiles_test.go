@@ -512,7 +512,7 @@ func testTileToOneBoardUsingBoard(t *testing.T) {
 	}
 }
 
-func testTileToOnePlayerUsingCapturedBy(t *testing.T) {
+func testTileToOnePlayerUsingPlayer(t *testing.T) {
 	tx := MustTx(boil.Begin())
 	defer tx.Rollback()
 
@@ -527,18 +527,18 @@ func testTileToOnePlayerUsingCapturedBy(t *testing.T) {
 		t.Errorf("Unable to randomize Player struct: %s", err)
 	}
 
-	local.CapturedBy.Valid = true
+	local.PlayerID.Valid = true
 
 	if err := foreign.Insert(tx); err != nil {
 		t.Fatal(err)
 	}
 
-	local.CapturedBy.Int = foreign.ID
+	local.PlayerID.Int = foreign.ID
 	if err := local.Insert(tx); err != nil {
 		t.Fatal(err)
 	}
 
-	check, err := local.CapturedBy(tx).One()
+	check, err := local.Player(tx).One()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -548,18 +548,18 @@ func testTileToOnePlayerUsingCapturedBy(t *testing.T) {
 	}
 
 	slice := TileSlice{&local}
-	if err = local.L.LoadCapturedBy(tx, false, (*[]*Tile)(&slice)); err != nil {
+	if err = local.L.LoadPlayer(tx, false, (*[]*Tile)(&slice)); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.CapturedBy == nil {
+	if local.R.Player == nil {
 		t.Error("struct should have been eager loaded")
 	}
 
-	local.R.CapturedBy = nil
-	if err = local.L.LoadCapturedBy(tx, true, &local); err != nil {
+	local.R.Player = nil
+	if err = local.L.LoadPlayer(tx, true, &local); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.CapturedBy == nil {
+	if local.R.Player == nil {
 		t.Error("struct should have been eager loaded")
 	}
 }
@@ -620,7 +620,7 @@ func testTileToOneSetOpBoardUsingBoard(t *testing.T) {
 		}
 	}
 }
-func testTileToOneSetOpPlayerUsingCapturedBy(t *testing.T) {
+func testTileToOneSetOpPlayerUsingPlayer(t *testing.T) {
 	var err error
 
 	tx := MustTx(boil.Begin())
@@ -648,36 +648,36 @@ func testTileToOneSetOpPlayerUsingCapturedBy(t *testing.T) {
 	}
 
 	for i, x := range []*Player{&b, &c} {
-		err = a.SetCapturedBy(tx, i != 0, x)
+		err = a.SetPlayer(tx, i != 0, x)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if a.R.CapturedBy != x {
+		if a.R.Player != x {
 			t.Error("relationship struct not set to correct value")
 		}
 
-		if x.R.CapturedByTiles[0] != &a {
+		if x.R.Tiles[0] != &a {
 			t.Error("failed to append to foreign relationship struct")
 		}
-		if a.CapturedBy.Int != x.ID {
-			t.Error("foreign key was wrong value", a.CapturedBy.Int)
+		if a.PlayerID.Int != x.ID {
+			t.Error("foreign key was wrong value", a.PlayerID.Int)
 		}
 
-		zero := reflect.Zero(reflect.TypeOf(a.CapturedBy.Int))
-		reflect.Indirect(reflect.ValueOf(&a.CapturedBy.Int)).Set(zero)
+		zero := reflect.Zero(reflect.TypeOf(a.PlayerID.Int))
+		reflect.Indirect(reflect.ValueOf(&a.PlayerID.Int)).Set(zero)
 
 		if err = a.Reload(tx); err != nil {
 			t.Fatal("failed to reload", err)
 		}
 
-		if a.CapturedBy.Int != x.ID {
-			t.Error("foreign key was wrong value", a.CapturedBy.Int, x.ID)
+		if a.PlayerID.Int != x.ID {
+			t.Error("foreign key was wrong value", a.PlayerID.Int, x.ID)
 		}
 	}
 }
 
-func testTileToOneRemoveOpPlayerUsingCapturedBy(t *testing.T) {
+func testTileToOneRemoveOpPlayerUsingPlayer(t *testing.T) {
 	var err error
 
 	tx := MustTx(boil.Begin())
@@ -698,15 +698,15 @@ func testTileToOneRemoveOpPlayerUsingCapturedBy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = a.SetCapturedBy(tx, true, &b); err != nil {
+	if err = a.SetPlayer(tx, true, &b); err != nil {
 		t.Fatal(err)
 	}
 
-	if err = a.RemoveCapturedBy(tx, &b); err != nil {
+	if err = a.RemovePlayer(tx, &b); err != nil {
 		t.Error("failed to remove relationship")
 	}
 
-	count, err := a.CapturedBy(tx).Count()
+	count, err := a.Player(tx).Count()
 	if err != nil {
 		t.Error(err)
 	}
@@ -714,15 +714,15 @@ func testTileToOneRemoveOpPlayerUsingCapturedBy(t *testing.T) {
 		t.Error("want no relationships remaining")
 	}
 
-	if a.R.CapturedBy != nil {
+	if a.R.Player != nil {
 		t.Error("R struct entry should be nil")
 	}
 
-	if a.CapturedBy.Valid {
+	if a.PlayerID.Valid {
 		t.Error("foreign key value should be nil")
 	}
 
-	if len(b.R.CapturedByTiles) != 0 {
+	if len(b.R.Tiles) != 0 {
 		t.Error("failed to remove a from b's relationships")
 	}
 }
@@ -797,7 +797,7 @@ func testTilesSelect(t *testing.T) {
 }
 
 var (
-	tileDBTypes = map[string]string{`BoardID`: `integer`, `CapturedBy`: `integer`, `CreatedAt`: `timestamp without time zone`, `ID`: `integer`, `UpdatedAt`: `timestamp without time zone`}
+	tileDBTypes = map[string]string{`BoardID`: `integer`, `CreatedAt`: `timestamp without time zone`, `ID`: `integer`, `PlayerID`: `integer`, `UpdatedAt`: `timestamp without time zone`}
 	_           = bytes.MinRead
 )
 
