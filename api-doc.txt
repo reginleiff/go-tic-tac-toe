@@ -1,0 +1,185 @@
+--------------------- DIRECTORY ----------------------------
+11:  Get all Rooms
+35:  Update Player Room
+50:  Get all Players in a Room
+77:  Update Room Status
+95:  Get all Tiles on a Board
+171: Update a Tile
+
+---------------------- METHODS ----------------------------
+Get all Rooms
+url: 
+	GET /api/rooms
+parameters:
+	none
+response:
+	200: success 
+	[
+		{
+			room_id: 1,
+			board_id: 1,
+			status: 0,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z"		
+		},
+		{
+			room_id: 2,
+			board_id: 2,
+			status: 0,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z"
+		}
+	]
+
+------------------------------------------------------------
+Update Player Room
+
+url: 
+	PUT /api/players/:playerid
+parameters:
+	playerid int
+body:
+	{
+		roomId: int
+	}
+response:
+	200: success 
+	OR 400: invalid roomid, playerid given or room is full
+
+------------------------------------------------------------
+Get Players in Room
+
+url:
+	GET /api/players
+parameters:
+	roomid int
+response:
+	200: success
+	[
+		{
+			id: 1,
+			room_id: 2,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z"
+
+		},
+		{
+			id: 5,
+			room_id: 2,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z"
+		}
+	]
+
+	OR 400: invalid roomid given 
+
+------------------------------------------------------------
+Update Room Status
+url:
+	PUT /api/rooms/:roomid
+parameters:
+	roomid int
+body:
+	{
+		statusCode: int
+	}
+response:
+	200: success
+	OR 400: invalid roomid or statuscode
+accepted status code:
+	0: empty room
+	1: 1 player inside
+	2: room full
+
+------------------------------------------------------------
+Get all Tiles on a Board
+url:
+	GET /api/tiles
+parameters:
+	boardid int
+response:
+	200: success
+	[
+		{
+			id: 1,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 1
+		},
+		{
+			id: 2,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 1
+		},
+		{
+			id: 3,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 2
+		},
+		{
+			id: 4,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 1
+		},
+		{
+			id: 5,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 1
+		},
+		{
+			id: 6,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 2
+		},
+		{
+			id: 7,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 1
+		},
+		{
+			id: 8,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 1
+		},
+		{
+			id: 9,
+			board_id: 1,
+			created_at: "2018-06-01T11:42Z",
+			updated_at: "2018-06-01T11:42Z",
+			player_id: 2
+		}	
+	]
+	
+	OR 400: invalid boardid given
+
+------------------------------------------------------------
+Update Tile
+url:
+	PUT /api/tiles/:id
+parameters:
+	tileid in
+body:
+	{
+		playerId: int
+	}
+response:
+	200: success 
+	OR 400: invalid tileid or playerId given
+
+------------------------------------------------------------
+
