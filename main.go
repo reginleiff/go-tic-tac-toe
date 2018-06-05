@@ -19,33 +19,34 @@ const (
 )
 
 const (
-	QUERY_GET_ROOMS = "SELECT * FROM rooms"
+	queryGetRooms = "SELECT * FROM rooms"
 )
 
 func getRooms(w http.ResponseWriter, r *http.Request) {
-	
-	rooms := []models.Room{}
-	
-	if err := queryRooms(&rooms); err != nil {
-		http.Error(w, err.Error(), 500) // server error if failed to retrieve rooms
+	var rooms []models.Room
+	var err error
+
+	if rooms, err = queryRooms(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError) 
 		return
 	}
 	
 	out, err := json.Marshal(rooms)
 
 	if err != nil {
-		http.Error(w, err.Error(), 500) // server error if failed to retrieve rooms
+		http.Error(w, err.Error(), http.StatusInternalServerError) 
 		return
 	}
 
 	fmt.Fprintf(w, string(out))
 }
 
-func queryRooms(rooms *[]models.Room) error {
-	rows, err := db.Query(QUERY_GET_ROOMS)
+func queryRooms() ([]models.Room, error) {
+	rooms := []models.Room{}
+	rows, err := db.Query(queryGetRooms)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer rows.Close()
@@ -60,16 +61,16 @@ func queryRooms(rooms *[]models.Room) error {
 			&room.UpdatedAt,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		*rooms = append(*rooms, room)
+		rooms = append(rooms, room)
 	}
 
 	if err := rows.Err(); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return rooms, nil
 }
 
 func initDB() {
@@ -82,7 +83,8 @@ func initDB() {
 	if err != nil{
 		fmt.Printf("couldn't open database\n")
 		panic(err)
-	} }
+	} 
+}
 
 func main() {
 	
