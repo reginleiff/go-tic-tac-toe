@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"github.com/reginleiff/go-tic-tac-toe/models"
 	"encoding/json"
- 	_ "github.com/lib/pq"
+	_ "github.com/lib/pq"
 ) 
 
 var db *sql.DB
@@ -30,7 +30,7 @@ func getRooms(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError) 
 		return
 	}
-	
+
 	out, err := json.Marshal(rooms)
 
 	if err != nil {
@@ -76,7 +76,7 @@ func queryRooms() ([]models.Room, error) {
 func initDB() {
 	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=disable", DB_USER, DB_NAME, DB_HOST, DB_PORT)
 	fmt.Println(psqlInfo)
-	
+
 	var err error
 	db, err = sql.Open("postgres", "postgres://m012-hb@localhost/ttt_dev?sslmode=disable");
 
@@ -87,10 +87,11 @@ func initDB() {
 }
 
 func main() {
-	
+
 	initDB()
 	defer db.Close()
 
+	http.Handle("/", http.FileServer(http.Dir("./assets")))
 	http.HandleFunc("/api/get/rooms", getRooms)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
