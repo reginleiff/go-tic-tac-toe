@@ -1,6 +1,6 @@
 blacklist=["goose_db_version"]
 [postgres]
-  dbname = "ttc_dev"
+  dbname = "ttt_dev"
   host = "localhost"
   port = 5432
   user = "m012-hb"

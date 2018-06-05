@@ -1,8 +1,8 @@
 test:
   driver: postgres
-  open: user=m012-hb dbname=ttc_test sslmode=disable
+  open: user=m012-hb dbname=ttt_test sslmode=disable
         
 development:
   driver: postgres 
-  open: user=m012-hb dbname=ttc_dev sslmode=disable
+  open: user=m012-hb dbname=ttt_dev sslmode=disable
 
