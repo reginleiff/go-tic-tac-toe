@@ -23,25 +23,43 @@ const (
 	queryGetRooms = "SELECT * FROM rooms"
 )
 
-func isNewPlayer(r *http.Request) bool {
-	fmt.Printf("debug (isNewPlayer): number of cookies is %v\n", len(r.Cookies()))
-	return len(r.Cookies()) == 0
+func isNewPlayer(cookieId string) bool {
+	fmt.Printf("debug (isNewPlayer): checking cookie id %s\n", cookieId)
+
+	var entryExists bool
+
+	query := fmt.Sprintf("SELECT 1 FROM players WHERE id = %s", cookieId)
+	fmt.Printf("debug (isNewPlayer): query - %s\n", query)
+	err := db.QueryRow(query).Scan(&entryExists)
+
+	if err != nil {
+		fmt.Printf("debug (isNewPlayer): error checking cookie id - %s\n", err)
+	}
+
+	return !entryExists
 }
 
 func readCookies(w http.ResponseWriter, r *http.Request) {
 
+	var cookieId string
+
 	for _, cookie := range r.Cookies() {
 		fmt.Printf("debug (readCookies): cookie name - " + cookie.Name + ", cookie value - " + cookie.Value + "\n")
+		if (cookie.Name == "player_id") {
+			cookieId = cookie.Value
+		}
 	}
 
-	if isNewPlayer(r) {
+	if isNewPlayer(cookieId) {
 		fmt.Printf("debug (readCookies): need to set cookie\n")
-		id, err := createPlayer()
+		newId, err := createPlayer()
+
 		if err != nil {
 			fmt.Printf("debug (readCookies): error creating player\n")
 		}
-		fmt.Printf("debug (readCookies): id created is %v\n", id)
-		setCookies(w, id)
+
+		fmt.Printf("debug (readCookies): id created is %v\n", newId)
+		setCookies(w, newId)
 	} else {
 		fmt.Printf("debug (readCookies): cookies already set\n")
 	}
