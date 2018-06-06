@@ -139,6 +139,69 @@ func queryRooms() ([]models.Room, error) {
 	return rooms, nil
 }
 
+func getTiles(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("debug (getTiles): getting tiles\n")
+
+	var tiles []models.Tile
+	var err error
+	
+	q, ok := r.URL.Query()["boardid"]
+	
+	if !ok || len(q) < 1 {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	boardId := q[0]
+
+	if tiles, err = queryTiles(boardId); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		return
+	}
+
+	out, err := json.Marshal(tiles)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		return
+	}
+
+	fmt.Fprintf(w, string(out))
+}
+
+func queryTiles(boardId string) ([]models.Tile, error) {
+	fmt.Printf("debug (queryTiles): querying tiles with board id - %s\n", boardId)
+	tiles := []models.Tile{}
+	query := fmt.Sprintf("SELECT * FROM tiles WHERE board_id = %s", boardId)
+	rows, err := db.Query(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		tile := models.Tile{}
+		err := rows.Scan(
+			&tile.ID,
+			&tile.BoardID,
+			&tile.CreatedAt,
+			&tile.UpdatedAt,
+			&tile.PlayerID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tiles = append(tiles, tile)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return tiles, nil
+}
+
 func initDB() {
 	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=disable", DB_USER, DB_NAME, DB_HOST, DB_PORT)
 	fmt.Println(psqlInfo)
@@ -159,6 +222,7 @@ func main() {
 
 	http.Handle("/", http.FileServer(http.Dir("./assets")))
 	http.HandleFunc("/api/get/rooms", getRooms)
+	http.HandleFunc("/api/get/tiles/", getTiles)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("debug (main): failed to listen on port 8080\n")
