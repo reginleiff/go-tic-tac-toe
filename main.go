@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 	"fmt"
 	"database/sql"
 	"github.com/reginleiff/go-tic-tac-toe/models"
@@ -22,7 +23,54 @@ const (
 	queryGetRooms = "SELECT * FROM rooms"
 )
 
+func isNewPlayer(r *http.Request) bool {
+	fmt.Printf("debug (isNewPlayer): number of cookies is %v\n", len(r.Cookies()))
+	return len(r.Cookies()) == 0
+}
+
+func readCookies(w http.ResponseWriter, r *http.Request) {
+
+	for _, cookie := range r.Cookies() {
+		fmt.Printf("debug (readCookies): cookie name - " + cookie.Name + ", cookie value - " + cookie.Value + "\n")
+	}
+
+	if isNewPlayer(r) {
+		fmt.Printf("debug (readCookies): need to set cookie\n")
+		id, err := createPlayer()
+		if err != nil {
+			fmt.Printf("debug (readCookies): error creating player\n")
+		}
+		fmt.Printf("debug (readCookies): id created is %v\n", id)
+		setCookies(w, id)
+	} else {
+		fmt.Printf("debug (readCookies): cookies already set\n")
+	}
+}
+
+func setCookies(w http.ResponseWriter, playerID int) {
+	idString := strconv.Itoa(playerID)
+	fmt.Printf("debug (setCookies): setting cookie value to %s\n", idString)
+	cookie := http.Cookie{Name: "player_id", Value: idString}
+	http.SetCookie(w, &cookie)
+}
+
+func createPlayer() (int, error) {
+	var id int
+	fmt.Printf("debug (createPlayer): creating new player\n")	
+	err := db.QueryRow("INSERT INTO players (created_at, updated_at) VALUES (NOW(), NOW()) RETURNING id").Scan(&id);
+
+	if err != nil {
+		fmt.Println("debug (createPlayer): error retrieving id - %s\n", err)
+		return 0, err
+	}
+
+	fmt.Printf("debug (createPlayer): id created is %v\n", id)
+	return id, nil
+}
+
 func getRooms(w http.ResponseWriter, r *http.Request) {
+	readCookies(w, r) // need to check cookies in lobby
+	
 	var rooms []models.Room
 	var err error
 
@@ -78,10 +126,10 @@ func initDB() {
 	fmt.Println(psqlInfo)
 
 	var err error
-	db, err = sql.Open("postgres", "postgres://m012-hb@localhost/ttt_dev?sslmode=disable");
+	db, err = sql.Open("postgres", psqlInfo);
 
 	if err != nil{
-		fmt.Printf("couldn't open database\n")
+		fmt.Printf("debug (initDB): couldn't open database\n")
 		panic(err)
 	} 
 }
@@ -95,7 +143,7 @@ func main() {
 	http.HandleFunc("/api/get/rooms", getRooms)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Printf("failed to listen on port 8080\n")
+		fmt.Printf("debug (main): failed to listen on port 8080\n")
 		panic(err)
 	}
 }
