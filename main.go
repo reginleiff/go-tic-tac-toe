@@ -30,6 +30,18 @@ const (
 	boardsTable = "boards"
 )
 
+const (
+//	playerIdNotProvidedError = "Bad Request: Player ID not provided"
+//	roomIdNotProvidedError = "Bad Request: Room ID not provided"
+//	tileIdNotProvidedError = "Bad Request: Tile ID not provided"
+//	boardIdNotProvidedError = "Bad Request: Board ID not provided"
+	paramsNotProvidedError = "Bad Request: Multiple Parameters not provided"
+	
+	playerDoesNotExistError = "Bad Request: Player does not exist"
+	roomDoesNotExistError = "Bad Request: Room does not exist"
+	playerRoomUpdateSuccess = "Success: Room for Player has been updated"
+)
+
 func doesIdExist(id string, tableName string) bool {
 	fmt.Printf("debug (doesIdExist): checking id->%s is in table->%s\n", id, tableName)
 	var entryExists bool
@@ -95,7 +107,7 @@ func createPlayer() (int, error) {
 
 func getRooms(w http.ResponseWriter, r *http.Request) {
 	readCookies(w, r) // need to check cookies in lobby
-	
+
 	var rooms []models.Room
 	var err error
 
@@ -152,9 +164,9 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 
 	var tiles []models.Tile
 	var err error
-	
+
 	q, ok := r.URL.Query()["boardid"]
-	
+
 	if !ok || len(q) < 1 {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -214,7 +226,7 @@ func queryTiles(boardId string) ([]models.Tile, error) {
 
 func updateTile (w http.ResponseWriter, r *http.Request) {
 	var err error	
-	
+
 	tileParams, tileParamsOk := r.URL.Query()["tileid"]	
 	playerParams, playerParamsOk := r.URL.Query()["playerid"]	
 
@@ -242,12 +254,47 @@ func updateTile (w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-	
+
 		http.Error(w, "200 success", http.StatusOK)	
 		return
 	}
 
 	http.Error(w, err.Error(), http.StatusBadRequest)
+	return
+}
+
+func updatePlayerRoom(w http.ResponseWriter, r *http.Request) {
+	playerParams, playerParamsOk := r.URL.Query()["playerid"] 
+	roomParams, roomParamsOk := r.URL.Query()["roomid"]
+
+	if !playerParamsOk || !roomParamsOk || len(playerParams) < 1 || len(roomParams) < 1 {
+		http.Error(w, paramsNotProvidedError, http.StatusBadRequest)
+		return
+	}
+
+	playerId := playerParams[0]
+	roomId := roomParams[0]
+
+	if !doesIdExist(playerId, playersTable) {
+		http.Error(w, playerDoesNotExistError, http.StatusBadRequest)
+		return
+	}
+
+	if !doesIdExist(roomId, roomsTable) {
+		http.Error(w, roomDoesNotExistError, http.StatusBadRequest)
+		return
+	}
+
+	query := fmt.Sprintf("UPDATE players SET room_id=%s WHERE id=%s", roomId, playerId)
+	fmt.Printf("debug (updatePlayerRoom): query - %s\n", query)
+	_, err := db.Exec(query)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	http.Error(w, playerRoomUpdateSuccess, http.StatusOK)
 	return
 }
 
@@ -274,7 +321,7 @@ func main() {
 	http.HandleFunc("/api/get/rooms", getRooms)
 	http.HandleFunc("/api/get/tiles/", getTiles)
 	http.HandleFunc("/api/put/tiles/", updateTile)	
-
+	http.HandleFunc("/api/put/players/", updatePlayerRoom)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("debug (main): failed to listen on port 8080\n")
 		panic(err)
