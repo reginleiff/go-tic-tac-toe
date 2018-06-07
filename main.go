@@ -46,7 +46,6 @@ func doesIdExist(id string, tableName string) bool {
 }
 
 func readCookies(w http.ResponseWriter, r *http.Request) {
-
 	var playerId string
 
 	for _, cookie := range r.Cookies() {
@@ -69,6 +68,7 @@ func readCookies(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Printf("debug (readCookies): cookies already set\n")
 	}
+	return
 }
 
 func setCookies(w http.ResponseWriter, playerID int) {
@@ -76,6 +76,7 @@ func setCookies(w http.ResponseWriter, playerID int) {
 	fmt.Printf("debug (setCookies): setting cookie value to %s\n", idString)
 	cookie := http.Cookie{Name: "player_id", Value: idString}
 	http.SetCookie(w, &cookie)
+	return
 }
 
 func createPlayer() (int, error) {
@@ -111,6 +112,7 @@ func getRooms(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, string(out))
+	return
 }
 
 func queryRooms() ([]models.Room, error) {
@@ -155,6 +157,7 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 	
 	if !ok || len(q) < 1 {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	boardId := q[0]
@@ -172,6 +175,7 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, string(out))
+	return
 }
 
 func queryTiles(boardId string) ([]models.Tile, error) {
@@ -236,6 +240,7 @@ func updateTile (w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("debug (updateTile): error updating tile - %s\n", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 	
 		http.Error(w, "200 success", http.StatusOK)	
