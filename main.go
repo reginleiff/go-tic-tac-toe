@@ -202,6 +202,61 @@ func queryTiles(boardId string) ([]models.Tile, error) {
 	return tiles, nil
 }
 
+func tileExists(tileId string) bool {
+	fmt.Printf("debug (tileExists): checking tile id %s\n", tileId)
+
+	var entryExists bool
+
+	query := fmt.Sprintf("SELECT 1 FROM tiles WHERE id = %s", tileId)
+	fmt.Printf("debug (tileExists): query - %s\n", query)
+	err := db.QueryRow(query).Scan(&entryExists)
+
+	if err != nil {
+		fmt.Printf("debug (tileExists): error checking tile id - %s\n", err)
+	}
+
+	return entryExists
+}
+
+func updateTile (w http.ResponseWriter, r *http.Request) {
+	var err error	
+	
+	tileParams, tileParamsOk := r.URL.Query()["tileid"]	
+	playerParams, playerParamsOk := r.URL.Query()["playerid"]	
+
+	if !tileParamsOk || !playerParamsOk || len(tileParams) < 1 || len(playerParams) < 1 {
+		fmt.Printf("debug (updateTile): bad parameters\n")	
+		http.Error(w, err.Error(), http.StatusBadRequest)	
+		return
+	}
+
+	tileId := tileParams[0]
+	playerId := playerParams[0]
+
+	if isNewPlayer(playerId) {
+		fmt.Printf("debug (updateTile): player id does not exist\n")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if tileExists(tileId) {
+		query := fmt.Sprintf("UPDATE tiles SET player_id=%s WHERE id=%s", playerId, tileId)		
+		_, err := db.Exec(query)
+
+		if err != nil {
+			fmt.Printf("debug (updateTile): error updating tile - %s\n", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	
+		http.Error(w, "200 success", http.StatusOK)	
+		return
+	}
+
+	http.Error(w, err.Error(), http.StatusBadRequest)
+	return
+}
+
+
 func initDB() {
 	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=disable", DB_USER, DB_NAME, DB_HOST, DB_PORT)
 	fmt.Println(psqlInfo)
@@ -223,6 +278,7 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir("./assets")))
 	http.HandleFunc("/api/get/rooms", getRooms)
 	http.HandleFunc("/api/get/tiles/", getTiles)
+	http.HandleFunc("/api/put/tiles/", updateTile)	
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("debug (main): failed to listen on port 8080\n")
