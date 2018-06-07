@@ -35,15 +35,18 @@ const (
 	roomIdNotProvidedError = "Bad Request: Room ID not provided"
 	//	tileIdNotProvidedError = "Bad Request: Tile ID not provided"
 	boardIdNotProvidedError = "Bad Request: Board ID not provided"
-	paramsNotProvidedError = "Bad Request: Multiple Parameters not provided"
+	paramsNotProvidedError = "Bad Request: Some parameters not provided"
 
 	playerDoesNotExistError = "Bad Request: Player does not exist"
 	roomDoesNotExistError = "Bad Request: Room does not exist"
 	boardDoesNotExistError = "Bad Request: Board does not exist"
-	invalidStatusCodeError = "Bad Request: Invalid status code given"	
+	tileDoesNotExistError = "Bad Request: Tile does not exist"
 	
+	invalidStatusCodeError = "Bad Request: Invalid status code given"	
+
 	playerRoomUpdateSuccess = "Success: Room for Player has been updated"
 	roomStatusUpdateSuccess = "Success: Status for Room has been updated"
+	tileCaptureUpdateSuccess = "Success: Player for Tile has been updated"
 )
 
 func doesIdExist(id string, tableName string) bool {
@@ -215,14 +218,11 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateTile (w http.ResponseWriter, r *http.Request) {
-	var err error	
-
 	tileParams, tileParamsOk := r.URL.Query()["tileid"]	
 	playerParams, playerParamsOk := r.URL.Query()["playerid"]	
 
 	if !tileParamsOk || !playerParamsOk || len(tileParams) < 1 || len(playerParams) < 1 {
-		fmt.Printf("debug (updateTile): bad parameters\n")	
-		http.Error(w, err.Error(), http.StatusBadRequest)	
+		http.Error(w, paramsNotProvidedError, http.StatusBadRequest)	
 		return
 	}
 
@@ -230,26 +230,23 @@ func updateTile (w http.ResponseWriter, r *http.Request) {
 	playerId := playerParams[0]
 
 	if !doesIdExist(playerId, playersTable) {
-		fmt.Printf("debug (updateTile): player id does not exist\n")
+		http.Error(w, playerDoesNotExistError, http.StatusBadRequest)
+		return
+	}
+
+	if !doesIdExist(tileId, tilesTable) {
+		http.Error(w, tileDoesNotExistError, http.StatusBadRequest)
+		return
+	}
+	query := fmt.Sprintf("UPDATE tiles SET player_id=%s WHERE id=%s", playerId, tileId)		
+	_, err := db.Exec(query)
+
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if doesIdExist(tileId, tilesTable) {
-		query := fmt.Sprintf("UPDATE tiles SET player_id=%s WHERE id=%s", playerId, tileId)		
-		_, err := db.Exec(query)
-
-		if err != nil {
-			fmt.Printf("debug (updateTile): error updating tile - %s\n", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		http.Error(w, "200 success", http.StatusOK)	
-		return
-	}
-
-	http.Error(w, err.Error(), http.StatusBadRequest)
+	http.Error(w, tileCaptureUpdateSuccess, http.StatusOK)	
 	return
 }
 
