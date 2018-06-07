@@ -26,7 +26,7 @@ CREATE TABLE players (
 	updated_at	TIMESTAMP	NOT NULL,
 	
 	FOREIGN KEY (room_id)
-		REFERENCES players(id)
+		REFERENCES rooms(id)
 );
 
 CREATE TABLE tiles (
