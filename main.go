@@ -39,6 +39,7 @@ const (
 	
 	playerDoesNotExistError = "Bad Request: Player does not exist"
 	roomDoesNotExistError = "Bad Request: Room does not exist"
+	boardDoesNotExistError = "Bad Request: Board does not exist"
 	playerRoomUpdateSuccess = "Success: Room for Player has been updated"
 )
 
@@ -165,15 +166,20 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 	var tiles []models.Tile
 	var err error
 
-	q, ok := r.URL.Query()["boardid"]
+	tileParams, tileParamsOk := r.URL.Query()["boardid"]
 
-	if !ok || len(q) < 1 {
+	if !tileParamsOk || len(tileParams) < 1 {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	boardId := q[0]
+	boardId := tileParams[0]
 
+	if !doesIdExist(boardId, boardsTable) {
+		http.Error(w, boardDoesNotExistError, http.StatusBadRequest)
+		return
+	}	
+	
 	if tiles, err = queryTiles(boardId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError) 
 		return
