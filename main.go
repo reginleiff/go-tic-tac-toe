@@ -31,16 +31,19 @@ const (
 )
 
 const (
-//	playerIdNotProvidedError = "Bad Request: Player ID not provided"
+	//	playerIdNotProvidedError = "Bad Request: Player ID not provided"
 	roomIdNotProvidedError = "Bad Request: Room ID not provided"
-//	tileIdNotProvidedError = "Bad Request: Tile ID not provided"
+	//	tileIdNotProvidedError = "Bad Request: Tile ID not provided"
 	boardIdNotProvidedError = "Bad Request: Board ID not provided"
 	paramsNotProvidedError = "Bad Request: Multiple Parameters not provided"
-	
+
 	playerDoesNotExistError = "Bad Request: Player does not exist"
 	roomDoesNotExistError = "Bad Request: Room does not exist"
 	boardDoesNotExistError = "Bad Request: Board does not exist"
+	invalidStatusCodeError = "Bad Request: Invalid status code given"	
+	
 	playerRoomUpdateSuccess = "Success: Room for Player has been updated"
+	roomStatusUpdateSuccess = "Success: Status for Room has been updated"
 )
 
 func doesIdExist(id string, tableName string) bool {
@@ -108,7 +111,7 @@ func createPlayer() (int, error) {
 
 func getRooms(w http.ResponseWriter, r *http.Request) {
 	readCookies(w, r) // need to check cookies in lobby
-	
+
 	rows, err := db.Query(queryGetRooms)
 
 	if err != nil {
@@ -139,7 +142,7 @@ func getRooms(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	out, err := json.Marshal(rooms)
 
 	if err != nil {
@@ -314,14 +317,14 @@ func updatePlayerRoom(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	http.Error(w, playerRoomUpdateSuccess, http.StatusOK)
 	return
 }
 
 func getPlayersInRoom(w http.ResponseWriter, r *http.Request) {
 	roomParams, roomParamsOk := r.URL.Query()["roomid"]
-	
+
 	if !roomParamsOk || len(roomParams) < 1 {
 		http.Error(w, roomIdNotProvidedError, http.StatusBadRequest)
 		return
@@ -336,7 +339,7 @@ func getPlayersInRoom(w http.ResponseWriter, r *http.Request) {
 
 	query := fmt.Sprintf("SELECT * FROM players WHERE room_id=%s", roomId)	
 	rows, err := db.Query(query)
-	
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -345,7 +348,7 @@ func getPlayersInRoom(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	var players []models.Player	
-	
+
 	for rows.Next() {
 		player := models.Player{}
 		err := rows.Scan(
@@ -377,6 +380,43 @@ func getPlayersInRoom(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func updateRoomStatus(w http.ResponseWriter, r *http.Request) {
+	roomParams, roomParamsOk := r.URL.Query()["roomid"]
+	statusParams, statusParamsOk := r.URL.Query()["status"]
+
+	if !roomParamsOk || !statusParamsOk || len(roomParams) < 1 || len(statusParams) < 1 {
+		http.Error(w, paramsNotProvidedError, http.StatusBadRequest)
+		return
+	}
+
+	roomId := roomParams[0]
+	status := statusParams[0]
+
+	if !doesIdExist(roomId, roomsTable) {
+		http.Error(w, roomDoesNotExistError, http.StatusBadRequest)
+		return
+	}
+
+	switch(status) {
+		case "0": break
+		case "1": break
+		case "2": break
+		default: http.Error(w, invalidStatusCodeError, http.StatusBadRequest)
+		return
+	}
+
+	query := fmt.Sprintf("UPDATE rooms SET status=%s WHERE id=%s", status, roomId)
+	_, err := db.Exec(query)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Error(w, roomStatusUpdateSuccess, http.StatusOK)
+	return
+}
+
 func initDB() {
 	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=disable", DB_USER, DB_NAME, DB_HOST, DB_PORT)
 	fmt.Println(psqlInfo)
@@ -401,7 +441,8 @@ func main() {
 	http.HandleFunc("/api/get/players/", getPlayersInRoom)
 	http.HandleFunc("/api/put/tiles/", updateTile)	
 	http.HandleFunc("/api/put/players/", updatePlayerRoom)
-	
+	http.HandleFunc("/api/put/rooms/", updateRoomStatus)
+
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("debug (main): failed to listen on port 8080\n")
 		panic(err)
