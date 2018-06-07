@@ -32,7 +32,7 @@ const (
 
 const (
 //	playerIdNotProvidedError = "Bad Request: Player ID not provided"
-//	roomIdNotProvidedError = "Bad Request: Room ID not provided"
+	roomIdNotProvidedError = "Bad Request: Room ID not provided"
 //	tileIdNotProvidedError = "Bad Request: Tile ID not provided"
 //	boardIdNotProvidedError = "Bad Request: Board ID not provided"
 	paramsNotProvidedError = "Bad Request: Multiple Parameters not provided"
@@ -298,6 +298,63 @@ func updatePlayerRoom(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func getPlayersInRoom(w http.ResponseWriter, r *http.Request) {
+	roomParams, roomParamsOk := r.URL.Query()["roomid"]
+	
+	if !roomParamsOk || len(roomParams) < 1 {
+		http.Error(w, roomIdNotProvidedError, http.StatusBadRequest)
+		return
+	}
+
+	roomId := roomParams[0]
+
+	if !doesIdExist(roomId, roomsTable) {
+		http.Error(w, roomDoesNotExistError, http.StatusBadRequest)
+		return
+	}
+
+	query := fmt.Sprintf("SELECT * FROM players WHERE room_id=%s", roomId)	
+	rows, err := db.Query(query)
+	
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer rows.Close()
+
+	var players []models.Player	
+	
+	for rows.Next() {
+		player := models.Player{}
+		err := rows.Scan(
+			&player.ID,
+			&player.RoomID,
+			&player.CreatedAt,
+			&player.UpdatedAt,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		players = append(players, player)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	out, err := json.Marshal(players)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		return
+	}
+
+	fmt.Fprintf(w, string(out))
+	return
+}
 
 func initDB() {
 	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=disable", DB_USER, DB_NAME, DB_HOST, DB_PORT)
@@ -320,6 +377,7 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir("./assets")))
 	http.HandleFunc("/api/get/rooms", getRooms)
 	http.HandleFunc("/api/get/tiles/", getTiles)
+	http.HandleFunc("/api/get/players/", getPlayersInRoom)
 	http.HandleFunc("/api/put/tiles/", updateTile)	
 	http.HandleFunc("/api/put/players/", updatePlayerRoom)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
