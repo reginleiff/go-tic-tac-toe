@@ -214,40 +214,6 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func queryTiles(boardId string) ([]models.Tile, error) {
-	fmt.Printf("debug (queryTiles): querying tiles with board id - %s\n", boardId)
-	tiles := []models.Tile{}
-	query := fmt.Sprintf("SELECT * FROM tiles WHERE board_id = %s", boardId)
-	rows, err := db.Query(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		tile := models.Tile{}
-		err := rows.Scan(
-			&tile.ID,
-			&tile.BoardID,
-			&tile.CreatedAt,
-			&tile.UpdatedAt,
-			&tile.PlayerID,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		tiles = append(tiles, tile)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return tiles, nil
-}
-
 func updateTile (w http.ResponseWriter, r *http.Request) {
 	var err error	
 
