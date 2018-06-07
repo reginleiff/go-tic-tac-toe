@@ -23,43 +23,49 @@ const (
 	queryGetRooms = "SELECT * FROM rooms"
 )
 
-func isNewPlayer(cookieId string) bool {
-	fmt.Printf("debug (isNewPlayer): checking cookie id %s\n", cookieId)
+const (
+	playersTable = "players"
+	roomsTable = "rooms"
+	tilesTable = "tiles"	
+	boardsTable = "boards"
+)
 
+func doesIdExist(id string, tableName string) bool {
+	fmt.Printf("debug (doesIdExist): checking id->%s is in table->%s\n", id, tableName)
 	var entryExists bool
 
-	query := fmt.Sprintf("SELECT 1 FROM players WHERE id = %s", cookieId)
-	fmt.Printf("debug (isNewPlayer): query - %s\n", query)
+	query := fmt.Sprintf("SELECT 1 FROM %s WHERE id = %s", tableName, id)
+	fmt.Printf("debug (doesIdExist): query formed - %s\n", query)
 	err := db.QueryRow(query).Scan(&entryExists)
 
 	if err != nil {
-		fmt.Printf("debug (isNewPlayer): error checking cookie id - %s\n", err)
+		fmt.Printf("debug (doesIdExist): error checking id - %s\n", err)
 	}
 
-	return !entryExists
+	return entryExists
 }
 
 func readCookies(w http.ResponseWriter, r *http.Request) {
 
-	var cookieId string
+	var playerId string
 
 	for _, cookie := range r.Cookies() {
 		fmt.Printf("debug (readCookies): cookie name - " + cookie.Name + ", cookie value - " + cookie.Value + "\n")
 		if (cookie.Name == "player_id") {
-			cookieId = cookie.Value
+			playerId = cookie.Value
 		}
 	}
 
-	if isNewPlayer(cookieId) {
+	if !doesIdExist(playerId, playersTable) {
 		fmt.Printf("debug (readCookies): need to set cookie\n")
-		newId, err := createPlayer()
+		newPlayerId, err := createPlayer()
 
 		if err != nil {
 			fmt.Printf("debug (readCookies): error creating player\n")
 		}
 
-		fmt.Printf("debug (readCookies): id created is %v\n", newId)
-		setCookies(w, newId)
+		fmt.Printf("debug (readCookies): id created is %v\n", newPlayerId)
+		setCookies(w, newPlayerId)
 	} else {
 		fmt.Printf("debug (readCookies): cookies already set\n")
 	}
@@ -202,22 +208,6 @@ func queryTiles(boardId string) ([]models.Tile, error) {
 	return tiles, nil
 }
 
-func tileExists(tileId string) bool {
-	fmt.Printf("debug (tileExists): checking tile id %s\n", tileId)
-
-	var entryExists bool
-
-	query := fmt.Sprintf("SELECT 1 FROM tiles WHERE id = %s", tileId)
-	fmt.Printf("debug (tileExists): query - %s\n", query)
-	err := db.QueryRow(query).Scan(&entryExists)
-
-	if err != nil {
-		fmt.Printf("debug (tileExists): error checking tile id - %s\n", err)
-	}
-
-	return entryExists
-}
-
 func updateTile (w http.ResponseWriter, r *http.Request) {
 	var err error	
 	
@@ -233,13 +223,13 @@ func updateTile (w http.ResponseWriter, r *http.Request) {
 	tileId := tileParams[0]
 	playerId := playerParams[0]
 
-	if isNewPlayer(playerId) {
+	if !doesIdExist(playerId, playersTable) {
 		fmt.Printf("debug (updateTile): player id does not exist\n")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if tileExists(tileId) {
+	if doesIdExist(tileId, tilesTable) {
 		query := fmt.Sprintf("UPDATE tiles SET player_id=%s WHERE id=%s", playerId, tileId)		
 		_, err := db.Exec(query)
 
