@@ -108,36 +108,17 @@ func createPlayer() (int, error) {
 
 func getRooms(w http.ResponseWriter, r *http.Request) {
 	readCookies(w, r) // need to check cookies in lobby
-
-	var rooms []models.Room
-	var err error
-
-	if rooms, err = queryRooms(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) 
-		return
-	}
-
-	out, err := json.Marshal(rooms)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) 
-		return
-	}
-
-	fmt.Fprintf(w, string(out))
-	return
-}
-
-func queryRooms() ([]models.Room, error) {
-	rooms := []models.Room{}
+	
 	rows, err := db.Query(queryGetRooms)
 
 	if err != nil {
-		return nil, err
+		http.Error(w, err.Error(), http.StatusInternalServerError)	
+		return
 	}
 
 	defer rows.Close()
 
+	var rooms []models.Room
 	for rows.Next() {
 		room := models.Room{}
 		err := rows.Scan(
@@ -148,16 +129,26 @@ func queryRooms() ([]models.Room, error) {
 			&room.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			http.Error(w, err.Error(), http.StatusInternalServerError)	
+			return
 		}
-
 		rooms = append(rooms, room)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	return rooms, nil
+	
+	out, err := json.Marshal(rooms)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		return
+	}
+
+	fmt.Fprintf(w, string(out))
+	return
 }
 
 func getTiles(w http.ResponseWriter, r *http.Request) {
