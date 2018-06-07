@@ -34,7 +34,7 @@ const (
 //	playerIdNotProvidedError = "Bad Request: Player ID not provided"
 	roomIdNotProvidedError = "Bad Request: Room ID not provided"
 //	tileIdNotProvidedError = "Bad Request: Tile ID not provided"
-//	boardIdNotProvidedError = "Bad Request: Board ID not provided"
+	boardIdNotProvidedError = "Bad Request: Board ID not provided"
 	paramsNotProvidedError = "Bad Request: Multiple Parameters not provided"
 	
 	playerDoesNotExistError = "Bad Request: Player does not exist"
@@ -162,14 +162,10 @@ func queryRooms() ([]models.Room, error) {
 
 func getTiles(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("debug (getTiles): getting tiles\n")
-
-	var tiles []models.Tile
-	var err error
-
 	tileParams, tileParamsOk := r.URL.Query()["boardid"]
 
 	if !tileParamsOk || len(tileParams) < 1 {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, boardIdNotProvidedError, http.StatusBadRequest)
 		return
 	}
 
@@ -179,9 +175,37 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, boardDoesNotExistError, http.StatusBadRequest)
 		return
 	}	
-	
-	if tiles, err = queryTiles(boardId); err != nil {
+
+	fmt.Printf("debug (queryTiles): querying tiles with board id - %s\n", boardId)
+	query := fmt.Sprintf("SELECT * FROM tiles WHERE board_id = %s", boardId)
+	rows, err := db.Query(query)
+
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		return
+	}
+
+	defer rows.Close()
+
+	var tiles []models.Tile
+	for rows.Next() {
+		tile := models.Tile{}
+		err := rows.Scan(
+			&tile.ID,
+			&tile.BoardID,
+			&tile.CreatedAt,
+			&tile.UpdatedAt,
+			&tile.PlayerID,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		tiles = append(tiles, tile)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -386,9 +410,11 @@ func main() {
 	http.HandleFunc("/api/get/players/", getPlayersInRoom)
 	http.HandleFunc("/api/put/tiles/", updateTile)	
 	http.HandleFunc("/api/put/players/", updatePlayerRoom)
+	
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("debug (main): failed to listen on port 8080\n")
 		panic(err)
+		return
 	}
 }
 
