@@ -35,7 +35,7 @@ response:
 Update Player Room
 
 url: 
-	PUT /api/players/:playerid
+	PUT /api/players/:playerid/:roomid
 parameters:
 	playerid int
 body:

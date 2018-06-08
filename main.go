@@ -412,6 +412,7 @@ func main() {
 	defer db.Close()
 
 	http.Handle("/", http.FileServer(http.Dir("./assets")))
+	
 	http.HandleFunc("/api/get/rooms", getRooms)
 	http.HandleFunc("/api/get/tiles/", getTiles)
 	http.HandleFunc("/api/get/players/", getPlayersInRoom)
