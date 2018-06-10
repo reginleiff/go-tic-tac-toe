@@ -38,6 +38,7 @@ const (
 	playerRoomUpdateSuccess = "Success: Room for Player has been updated"
 	roomStatusUpdateSuccess = "Success: Status for Room has been updated"
 	tileCaptureUpdateSuccess = "Success: Player for Tile has been updated"
+	boardResetSuccess = "Success: Board has been reset"
 )
 
 func doesIdExist(id string, tableName string) bool {
@@ -221,7 +222,7 @@ func updateTile (w http.ResponseWriter, r *http.Request) {
 	tileId := tileParams[0]
 	playerId := playerParams[0]
 
-	if !doesIdExist(playerId, playersTable) {
+	if playerId != "NULL" && !doesIdExist(playerId, playersTable) {
 		http.Error(w, playerDoesNotExistError, http.StatusBadRequest)
 		return
 	}
@@ -372,6 +373,33 @@ func updateRoomStatus(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func clearBoardTiles(w http.ResponseWriter, r *http.Request) {
+	boardParams, boardParamsOk := r.URL.Query()["boardid"]
+	
+	if !boardParamsOk || len(boardParams) < 1 {
+		http.Error(w, boardIdNotProvidedError, http.StatusBadRequest)
+		return
+	}
+
+	boardId := boardParams[0]
+
+	if !doesIdExist(boardId, boardsTable) {
+		http.Error(w, boardDoesNotExistError, http.StatusBadRequest)
+		return
+	}
+
+	query := fmt.Sprintf("UPDATE tiles SET player_id=NULL WHERE board_id=%s", boardId)
+	_, err := db.Exec(query)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Error(w, boardResetSuccess, http.StatusOK)
+	return
+}
+
 func initDB(name, host, user, port, sslmode, pass string) {
 	psqlInfo := fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s sslmode=%s", user, name, pass, host, port, sslmode)
 	fmt.Printf("debug (initDB): %s\n", psqlInfo)
@@ -419,6 +447,7 @@ func main() {
 	http.HandleFunc("/api/put/tiles/", updateTile)	
 	http.HandleFunc("/api/put/players/", updatePlayerRoom)
 	http.HandleFunc("/api/put/rooms/", updateRoomStatus)
+	http.HandleFunc("/api/put/boards/", clearBoardTiles)
 
 	listenPortParam:= fmt.Sprintf("%s:%v", serverIp, serverPort)
 	fmt.Printf("debug (main): server attempting to listen on ip address %s and port %s\n", serverIp, serverPort)
