@@ -462,80 +462,6 @@ func testPlayersInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testPlayerToManyRoomPlayers(t *testing.T) {
-	var err error
-	tx := MustTx(boil.Begin())
-	defer tx.Rollback()
-
-	var a Player
-	var b, c Player
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, playerDBTypes, true, playerColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Player struct: %s", err)
-	}
-
-	if err := a.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-
-	randomize.Struct(seed, &b, playerDBTypes, false, playerColumnsWithDefault...)
-	randomize.Struct(seed, &c, playerDBTypes, false, playerColumnsWithDefault...)
-
-	b.RoomID.Valid = true
-	c.RoomID.Valid = true
-	b.RoomID.Int = a.ID
-	c.RoomID.Int = a.ID
-	if err = b.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-	if err = c.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-
-	player, err := a.RoomPlayers(tx).All()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	bFound, cFound := false, false
-	for _, v := range player {
-		if v.RoomID.Int == b.RoomID.Int {
-			bFound = true
-		}
-		if v.RoomID.Int == c.RoomID.Int {
-			cFound = true
-		}
-	}
-
-	if !bFound {
-		t.Error("expected to find b")
-	}
-	if !cFound {
-		t.Error("expected to find c")
-	}
-
-	slice := PlayerSlice{&a}
-	if err = a.L.LoadRoomPlayers(tx, false, (*[]*Player)(&slice)); err != nil {
-		t.Fatal(err)
-	}
-	if got := len(a.R.RoomPlayers); got != 2 {
-		t.Error("number of eager loaded records wrong, got:", got)
-	}
-
-	a.R.RoomPlayers = nil
-	if err = a.L.LoadRoomPlayers(tx, true, &a); err != nil {
-		t.Fatal(err)
-	}
-	if got := len(a.R.RoomPlayers); got != 2 {
-		t.Error("number of eager loaded records wrong, got:", got)
-	}
-
-	if t.Failed() {
-		t.Logf("%#v", player)
-	}
-}
-
 func testPlayerToManyTiles(t *testing.T) {
 	var err error
 	tx := MustTx(boil.Begin())
@@ -607,254 +533,6 @@ func testPlayerToManyTiles(t *testing.T) {
 
 	if t.Failed() {
 		t.Logf("%#v", tile)
-	}
-}
-
-func testPlayerToManyAddOpRoomPlayers(t *testing.T) {
-	var err error
-
-	tx := MustTx(boil.Begin())
-	defer tx.Rollback()
-
-	var a Player
-	var b, c, d, e Player
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-	foreigners := []*Player{&b, &c, &d, &e}
-	for _, x := range foreigners {
-		if err = randomize.Struct(seed, x, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if err := a.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-	if err = b.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-	if err = c.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-
-	foreignersSplitByInsertion := [][]*Player{
-		{&b, &c},
-		{&d, &e},
-	}
-
-	for i, x := range foreignersSplitByInsertion {
-		err = a.AddRoomPlayers(tx, i != 0, x...)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		first := x[0]
-		second := x[1]
-
-		if a.ID != first.RoomID.Int {
-			t.Error("foreign key was wrong value", a.ID, first.RoomID.Int)
-		}
-		if a.ID != second.RoomID.Int {
-			t.Error("foreign key was wrong value", a.ID, second.RoomID.Int)
-		}
-
-		if first.R.Room != &a {
-			t.Error("relationship was not added properly to the foreign slice")
-		}
-		if second.R.Room != &a {
-			t.Error("relationship was not added properly to the foreign slice")
-		}
-
-		if a.R.RoomPlayers[i*2] != first {
-			t.Error("relationship struct slice not set to correct value")
-		}
-		if a.R.RoomPlayers[i*2+1] != second {
-			t.Error("relationship struct slice not set to correct value")
-		}
-
-		count, err := a.RoomPlayers(tx).Count()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if want := int64((i + 1) * 2); count != want {
-			t.Error("want", want, "got", count)
-		}
-	}
-}
-
-func testPlayerToManySetOpRoomPlayers(t *testing.T) {
-	var err error
-
-	tx := MustTx(boil.Begin())
-	defer tx.Rollback()
-
-	var a Player
-	var b, c, d, e Player
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-	foreigners := []*Player{&b, &c, &d, &e}
-	for _, x := range foreigners {
-		if err = randomize.Struct(seed, x, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if err = a.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-	if err = b.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-	if err = c.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-
-	err = a.SetRoomPlayers(tx, false, &b, &c)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	count, err := a.RoomPlayers(tx).Count()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 2 {
-		t.Error("count was wrong:", count)
-	}
-
-	err = a.SetRoomPlayers(tx, true, &d, &e)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	count, err = a.RoomPlayers(tx).Count()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 2 {
-		t.Error("count was wrong:", count)
-	}
-
-	if b.RoomID.Valid {
-		t.Error("want b's foreign key value to be nil")
-	}
-	if c.RoomID.Valid {
-		t.Error("want c's foreign key value to be nil")
-	}
-	if a.ID != d.RoomID.Int {
-		t.Error("foreign key was wrong value", a.ID, d.RoomID.Int)
-	}
-	if a.ID != e.RoomID.Int {
-		t.Error("foreign key was wrong value", a.ID, e.RoomID.Int)
-	}
-
-	if b.R.Room != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
-	}
-	if c.R.Room != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
-	}
-	if d.R.Room != &a {
-		t.Error("relationship was not added properly to the foreign struct")
-	}
-	if e.R.Room != &a {
-		t.Error("relationship was not added properly to the foreign struct")
-	}
-
-	if a.R.RoomPlayers[0] != &d {
-		t.Error("relationship struct slice not set to correct value")
-	}
-	if a.R.RoomPlayers[1] != &e {
-		t.Error("relationship struct slice not set to correct value")
-	}
-}
-
-func testPlayerToManyRemoveOpRoomPlayers(t *testing.T) {
-	var err error
-
-	tx := MustTx(boil.Begin())
-	defer tx.Rollback()
-
-	var a Player
-	var b, c, d, e Player
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-	foreigners := []*Player{&b, &c, &d, &e}
-	for _, x := range foreigners {
-		if err = randomize.Struct(seed, x, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if err := a.Insert(tx); err != nil {
-		t.Fatal(err)
-	}
-
-	err = a.AddRoomPlayers(tx, true, foreigners...)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	count, err := a.RoomPlayers(tx).Count()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 4 {
-		t.Error("count was wrong:", count)
-	}
-
-	err = a.RemoveRoomPlayers(tx, foreigners[:2]...)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	count, err = a.RoomPlayers(tx).Count()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 2 {
-		t.Error("count was wrong:", count)
-	}
-
-	if b.RoomID.Valid {
-		t.Error("want b's foreign key value to be nil")
-	}
-	if c.RoomID.Valid {
-		t.Error("want c's foreign key value to be nil")
-	}
-
-	if b.R.Room != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
-	}
-	if c.R.Room != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
-	}
-	if d.R.Room != &a {
-		t.Error("relationship to a should have been preserved")
-	}
-	if e.R.Room != &a {
-		t.Error("relationship to a should have been preserved")
-	}
-
-	if len(a.R.RoomPlayers) != 2 {
-		t.Error("should have preserved two relationships")
-	}
-
-	// Removal doesn't do a stable deletion for performance so we have to flip the order
-	if a.R.RoomPlayers[1] != &d {
-		t.Error("relationship to d should have been preserved")
-	}
-	if a.R.RoomPlayers[0] != &e {
-		t.Error("relationship to e should have been preserved")
 	}
 }
 
@@ -1106,19 +784,19 @@ func testPlayerToManyRemoveOpTiles(t *testing.T) {
 	}
 }
 
-func testPlayerToOnePlayerUsingRoom(t *testing.T) {
+func testPlayerToOneRoomUsingRoom(t *testing.T) {
 	tx := MustTx(boil.Begin())
 	defer tx.Rollback()
 
 	var local Player
-	var foreign Player
+	var foreign Room
 
 	seed := randomize.NewSeed()
 	if err := randomize.Struct(seed, &local, playerDBTypes, true, playerColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize Player struct: %s", err)
 	}
-	if err := randomize.Struct(seed, &foreign, playerDBTypes, false, playerColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Player struct: %s", err)
+	if err := randomize.Struct(seed, &foreign, roomDBTypes, false, roomColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Room struct: %s", err)
 	}
 
 	local.RoomID.Valid = true
@@ -1158,23 +836,23 @@ func testPlayerToOnePlayerUsingRoom(t *testing.T) {
 	}
 }
 
-func testPlayerToOneSetOpPlayerUsingRoom(t *testing.T) {
+func testPlayerToOneSetOpRoomUsingRoom(t *testing.T) {
 	var err error
 
 	tx := MustTx(boil.Begin())
 	defer tx.Rollback()
 
 	var a Player
-	var b, c Player
+	var b, c Room
 
 	seed := randomize.NewSeed()
 	if err = randomize.Struct(seed, &a, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	if err = randomize.Struct(seed, &b, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &b, roomDBTypes, false, strmangle.SetComplement(roomPrimaryKeyColumns, roomColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	if err = randomize.Struct(seed, &c, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &c, roomDBTypes, false, strmangle.SetComplement(roomPrimaryKeyColumns, roomColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1185,7 +863,7 @@ func testPlayerToOneSetOpPlayerUsingRoom(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, x := range []*Player{&b, &c} {
+	for i, x := range []*Room{&b, &c} {
 		err = a.SetRoom(tx, i != 0, x)
 		if err != nil {
 			t.Fatal(err)
@@ -1195,7 +873,7 @@ func testPlayerToOneSetOpPlayerUsingRoom(t *testing.T) {
 			t.Error("relationship struct not set to correct value")
 		}
 
-		if x.R.RoomPlayers[0] != &a {
+		if x.R.Players[0] != &a {
 			t.Error("failed to append to foreign relationship struct")
 		}
 		if a.RoomID.Int != x.ID {
@@ -1215,20 +893,20 @@ func testPlayerToOneSetOpPlayerUsingRoom(t *testing.T) {
 	}
 }
 
-func testPlayerToOneRemoveOpPlayerUsingRoom(t *testing.T) {
+func testPlayerToOneRemoveOpRoomUsingRoom(t *testing.T) {
 	var err error
 
 	tx := MustTx(boil.Begin())
 	defer tx.Rollback()
 
 	var a Player
-	var b Player
+	var b Room
 
 	seed := randomize.NewSeed()
 	if err = randomize.Struct(seed, &a, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	if err = randomize.Struct(seed, &b, playerDBTypes, false, strmangle.SetComplement(playerPrimaryKeyColumns, playerColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &b, roomDBTypes, false, strmangle.SetComplement(roomPrimaryKeyColumns, roomColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1260,7 +938,7 @@ func testPlayerToOneRemoveOpPlayerUsingRoom(t *testing.T) {
 		t.Error("foreign key value should be nil")
 	}
 
-	if len(b.R.RoomPlayers) != 0 {
+	if len(b.R.Players) != 0 {
 		t.Error("failed to remove a from b's relationships")
 	}
 }

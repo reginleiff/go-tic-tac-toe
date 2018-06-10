@@ -797,7 +797,7 @@ func testTilesSelect(t *testing.T) {
 }
 
 var (
-	tileDBTypes = map[string]string{`BoardID`: `integer`, `CreatedAt`: `timestamp without time zone`, `ID`: `integer`, `PlayerID`: `integer`, `UpdatedAt`: `timestamp without time zone`}
+	tileDBTypes = map[string]string{`BoardID`: `integer`, `CreatedAt`: `timestamp without time zone`, `GameTile`: `integer`, `ID`: `integer`, `PlayerID`: `integer`, `UpdatedAt`: `timestamp without time zone`}
 	_           = bytes.MinRead
 )
 
