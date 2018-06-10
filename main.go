@@ -190,6 +190,7 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 		err := rows.Scan(
 			&tile.ID,
 			&tile.BoardID,
+			&tile.GameTile,
 			&tile.CreatedAt,
 			&tile.UpdatedAt,
 			&tile.PlayerID,
