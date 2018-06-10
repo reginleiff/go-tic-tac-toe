@@ -33,6 +33,7 @@ CREATE TABLE tiles (
 	PRIMARY KEY (id),
 	id		SERIAL		NOT NULL,
 	board_id	INT		NOT NULL,
+	game_tile	INT		NOT NULL,
 	created_at	TIMESTAMP	NOT NULL,
 	updated_at	TIMESTAMP	NOT NULL,
 	player_id	INT			,
