@@ -24,6 +24,7 @@ import (
 type Tile struct {
 	ID        int       `boil:"id" json:"id" toml:"id" yaml:"id"`
 	BoardID   int       `boil:"board_id" json:"board_id" toml:"board_id" yaml:"board_id"`
+	GameTile  int       `boil:"game_tile" json:"game_tile" toml:"game_tile" yaml:"game_tile"`
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	PlayerID  null.Int  `boil:"player_id" json:"player_id,omitempty" toml:"player_id" yaml:"player_id,omitempty"`
@@ -35,12 +36,14 @@ type Tile struct {
 var TileColumns = struct {
 	ID        string
 	BoardID   string
+	GameTile  string
 	CreatedAt string
 	UpdatedAt string
 	PlayerID  string
 }{
 	ID:        "id",
 	BoardID:   "board_id",
+	GameTile:  "game_tile",
 	CreatedAt: "created_at",
 	UpdatedAt: "updated_at",
 	PlayerID:  "player_id",
@@ -56,8 +59,8 @@ type tileR struct {
 type tileL struct{}
 
 var (
-	tileColumns               = []string{"id", "board_id", "created_at", "updated_at", "player_id"}
-	tileColumnsWithoutDefault = []string{"board_id", "created_at", "updated_at", "player_id"}
+	tileColumns               = []string{"id", "board_id", "game_tile", "created_at", "updated_at", "player_id"}
+	tileColumnsWithoutDefault = []string{"board_id", "game_tile", "created_at", "updated_at", "player_id"}
 	tileColumnsWithDefault    = []string{"id"}
 	tilePrimaryKeyColumns     = []string{"id"}
 )

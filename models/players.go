@@ -45,9 +45,8 @@ var PlayerColumns = struct {
 
 // playerR is where relationships are stored.
 type playerR struct {
-	Room        *Player
-	RoomPlayers PlayerSlice
-	Tiles       TileSlice
+	Room  *Room
+	Tiles TileSlice
 }
 
 // playerL is where Load methods for each relationship are stored.
@@ -337,46 +336,20 @@ func (q playerQuery) Exists() (bool, error) {
 }
 
 // RoomG pointed to by the foreign key.
-func (o *Player) RoomG(mods ...qm.QueryMod) playerQuery {
+func (o *Player) RoomG(mods ...qm.QueryMod) roomQuery {
 	return o.Room(boil.GetDB(), mods...)
 }
 
 // Room pointed to by the foreign key.
-func (o *Player) Room(exec boil.Executor, mods ...qm.QueryMod) playerQuery {
+func (o *Player) Room(exec boil.Executor, mods ...qm.QueryMod) roomQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("id=?", o.RoomID),
 	}
 
 	queryMods = append(queryMods, mods...)
 
-	query := Players(exec, queryMods...)
-	queries.SetFrom(query.Query, "\"players\"")
-
-	return query
-}
-
-// RoomPlayersG retrieves all the player's players via room_id column.
-func (o *Player) RoomPlayersG(mods ...qm.QueryMod) playerQuery {
-	return o.RoomPlayers(boil.GetDB(), mods...)
-}
-
-// RoomPlayers retrieves all the player's players with an executor via room_id column.
-func (o *Player) RoomPlayers(exec boil.Executor, mods ...qm.QueryMod) playerQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("\"players\".\"room_id\"=?", o.ID),
-	)
-
-	query := Players(exec, queryMods...)
-	queries.SetFrom(query.Query, "\"players\"")
-
-	if len(queries.GetSelect(query.Query)) == 0 {
-		queries.SetSelect(query.Query, []string{"\"players\".*"})
-	}
+	query := Rooms(exec, queryMods...)
+	queries.SetFrom(query.Query, "\"rooms\"")
 
 	return query
 }
@@ -437,7 +410,7 @@ func (playerL) LoadRoom(e boil.Executor, singular bool, maybePlayer interface{})
 	}
 
 	query := fmt.Sprintf(
-		"select * from \"players\" where \"id\" in (%s)",
+		"select * from \"rooms\" where \"id\" in (%s)",
 		strmangle.Placeholders(dialect.IndexPlaceholders, count, 1, 1),
 	)
 
@@ -447,13 +420,13 @@ func (playerL) LoadRoom(e boil.Executor, singular bool, maybePlayer interface{})
 
 	results, err := e.Query(query, args...)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load Player")
+		return errors.Wrap(err, "failed to eager load Room")
 	}
 	defer results.Close()
 
-	var resultSlice []*Player
+	var resultSlice []*Room
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Player")
+		return errors.Wrap(err, "failed to bind eager loaded slice Room")
 	}
 
 	if len(playerAfterSelectHooks) != 0 {
@@ -477,78 +450,6 @@ func (playerL) LoadRoom(e boil.Executor, singular bool, maybePlayer interface{})
 		for _, foreign := range resultSlice {
 			if local.RoomID.Int == foreign.ID {
 				local.R.Room = foreign
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadRoomPlayers allows an eager lookup of values, cached into the
-// loaded structs of the objects.
-func (playerL) LoadRoomPlayers(e boil.Executor, singular bool, maybePlayer interface{}) error {
-	var slice []*Player
-	var object *Player
-
-	count := 1
-	if singular {
-		object = maybePlayer.(*Player)
-	} else {
-		slice = *maybePlayer.(*[]*Player)
-		count = len(slice)
-	}
-
-	args := make([]interface{}, count)
-	if singular {
-		if object.R == nil {
-			object.R = &playerR{}
-		}
-		args[0] = object.ID
-	} else {
-		for i, obj := range slice {
-			if obj.R == nil {
-				obj.R = &playerR{}
-			}
-			args[i] = obj.ID
-		}
-	}
-
-	query := fmt.Sprintf(
-		"select * from \"players\" where \"room_id\" in (%s)",
-		strmangle.Placeholders(dialect.IndexPlaceholders, count, 1, 1),
-	)
-	if boil.DebugMode {
-		fmt.Fprintf(boil.DebugWriter, "%s\n%v\n", query, args)
-	}
-
-	results, err := e.Query(query, args...)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load players")
-	}
-	defer results.Close()
-
-	var resultSlice []*Player
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice players")
-	}
-
-	if len(playerAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.RoomPlayers = resultSlice
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.RoomID.Int {
-				local.R.RoomPlayers = append(local.R.RoomPlayers, foreign)
 				break
 			}
 		}
@@ -631,17 +532,17 @@ func (playerL) LoadTiles(e boil.Executor, singular bool, maybePlayer interface{}
 
 // SetRoomG of the player to the related item.
 // Sets o.R.Room to related.
-// Adds o to related.R.RoomPlayers.
+// Adds o to related.R.Players.
 // Uses the global database handle.
-func (o *Player) SetRoomG(insert bool, related *Player) error {
+func (o *Player) SetRoomG(insert bool, related *Room) error {
 	return o.SetRoom(boil.GetDB(), insert, related)
 }
 
 // SetRoomP of the player to the related item.
 // Sets o.R.Room to related.
-// Adds o to related.R.RoomPlayers.
+// Adds o to related.R.Players.
 // Panics on error.
-func (o *Player) SetRoomP(exec boil.Executor, insert bool, related *Player) {
+func (o *Player) SetRoomP(exec boil.Executor, insert bool, related *Room) {
 	if err := o.SetRoom(exec, insert, related); err != nil {
 		panic(boil.WrapErr(err))
 	}
@@ -649,9 +550,9 @@ func (o *Player) SetRoomP(exec boil.Executor, insert bool, related *Player) {
 
 // SetRoomGP of the player to the related item.
 // Sets o.R.Room to related.
-// Adds o to related.R.RoomPlayers.
+// Adds o to related.R.Players.
 // Uses the global database handle and panics on error.
-func (o *Player) SetRoomGP(insert bool, related *Player) {
+func (o *Player) SetRoomGP(insert bool, related *Room) {
 	if err := o.SetRoom(boil.GetDB(), insert, related); err != nil {
 		panic(boil.WrapErr(err))
 	}
@@ -659,8 +560,8 @@ func (o *Player) SetRoomGP(insert bool, related *Player) {
 
 // SetRoom of the player to the related item.
 // Sets o.R.Room to related.
-// Adds o to related.R.RoomPlayers.
-func (o *Player) SetRoom(exec boil.Executor, insert bool, related *Player) error {
+// Adds o to related.R.Players.
+func (o *Player) SetRoom(exec boil.Executor, insert bool, related *Room) error {
 	var err error
 	if insert {
 		if err = related.Insert(exec); err != nil {
@@ -696,11 +597,11 @@ func (o *Player) SetRoom(exec boil.Executor, insert bool, related *Player) error
 	}
 
 	if related.R == nil {
-		related.R = &playerR{
-			RoomPlayers: PlayerSlice{o},
+		related.R = &roomR{
+			Players: PlayerSlice{o},
 		}
 	} else {
-		related.R.RoomPlayers = append(related.R.RoomPlayers, o)
+		related.R.Players = append(related.R.Players, o)
 	}
 
 	return nil
@@ -710,7 +611,7 @@ func (o *Player) SetRoom(exec boil.Executor, insert bool, related *Player) error
 // Sets o.R.Room to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Uses the global database handle.
-func (o *Player) RemoveRoomG(related *Player) error {
+func (o *Player) RemoveRoomG(related *Room) error {
 	return o.RemoveRoom(boil.GetDB(), related)
 }
 
@@ -718,7 +619,7 @@ func (o *Player) RemoveRoomG(related *Player) error {
 // Sets o.R.Room to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Panics on error.
-func (o *Player) RemoveRoomP(exec boil.Executor, related *Player) {
+func (o *Player) RemoveRoomP(exec boil.Executor, related *Room) {
 	if err := o.RemoveRoom(exec, related); err != nil {
 		panic(boil.WrapErr(err))
 	}
@@ -728,7 +629,7 @@ func (o *Player) RemoveRoomP(exec boil.Executor, related *Player) {
 // Sets o.R.Room to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Uses the global database handle and panics on error.
-func (o *Player) RemoveRoomGP(related *Player) {
+func (o *Player) RemoveRoomGP(related *Room) {
 	if err := o.RemoveRoom(boil.GetDB(), related); err != nil {
 		panic(boil.WrapErr(err))
 	}
@@ -737,7 +638,7 @@ func (o *Player) RemoveRoomGP(related *Player) {
 // RemoveRoom relationship.
 // Sets o.R.Room to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
-func (o *Player) RemoveRoom(exec boil.Executor, related *Player) error {
+func (o *Player) RemoveRoom(exec boil.Executor, related *Room) error {
 	var err error
 
 	o.RoomID.Valid = false
@@ -751,239 +652,18 @@ func (o *Player) RemoveRoom(exec boil.Executor, related *Player) error {
 		return nil
 	}
 
-	for i, ri := range related.R.RoomPlayers {
+	for i, ri := range related.R.Players {
 		if o.RoomID.Int != ri.RoomID.Int {
 			continue
 		}
 
-		ln := len(related.R.RoomPlayers)
+		ln := len(related.R.Players)
 		if ln > 1 && i < ln-1 {
-			related.R.RoomPlayers[i] = related.R.RoomPlayers[ln-1]
+			related.R.Players[i] = related.R.Players[ln-1]
 		}
-		related.R.RoomPlayers = related.R.RoomPlayers[:ln-1]
+		related.R.Players = related.R.Players[:ln-1]
 		break
 	}
-	return nil
-}
-
-// AddRoomPlayersG adds the given related objects to the existing relationships
-// of the player, optionally inserting them as new records.
-// Appends related to o.R.RoomPlayers.
-// Sets related.R.Room appropriately.
-// Uses the global database handle.
-func (o *Player) AddRoomPlayersG(insert bool, related ...*Player) error {
-	return o.AddRoomPlayers(boil.GetDB(), insert, related...)
-}
-
-// AddRoomPlayersP adds the given related objects to the existing relationships
-// of the player, optionally inserting them as new records.
-// Appends related to o.R.RoomPlayers.
-// Sets related.R.Room appropriately.
-// Panics on error.
-func (o *Player) AddRoomPlayersP(exec boil.Executor, insert bool, related ...*Player) {
-	if err := o.AddRoomPlayers(exec, insert, related...); err != nil {
-		panic(boil.WrapErr(err))
-	}
-}
-
-// AddRoomPlayersGP adds the given related objects to the existing relationships
-// of the player, optionally inserting them as new records.
-// Appends related to o.R.RoomPlayers.
-// Sets related.R.Room appropriately.
-// Uses the global database handle and panics on error.
-func (o *Player) AddRoomPlayersGP(insert bool, related ...*Player) {
-	if err := o.AddRoomPlayers(boil.GetDB(), insert, related...); err != nil {
-		panic(boil.WrapErr(err))
-	}
-}
-
-// AddRoomPlayers adds the given related objects to the existing relationships
-// of the player, optionally inserting them as new records.
-// Appends related to o.R.RoomPlayers.
-// Sets related.R.Room appropriately.
-func (o *Player) AddRoomPlayers(exec boil.Executor, insert bool, related ...*Player) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.RoomID.Int = o.ID
-			rel.RoomID.Valid = true
-			if err = rel.Insert(exec); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"players\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"room_id"}),
-				strmangle.WhereClause("\"", "\"", 2, playerPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
-
-			if boil.DebugMode {
-				fmt.Fprintln(boil.DebugWriter, updateQuery)
-				fmt.Fprintln(boil.DebugWriter, values)
-			}
-
-			if _, err = exec.Exec(updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.RoomID.Int = o.ID
-			rel.RoomID.Valid = true
-		}
-	}
-
-	if o.R == nil {
-		o.R = &playerR{
-			RoomPlayers: related,
-		}
-	} else {
-		o.R.RoomPlayers = append(o.R.RoomPlayers, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &playerR{
-				Room: o,
-			}
-		} else {
-			rel.R.Room = o
-		}
-	}
-	return nil
-}
-
-// SetRoomPlayersG removes all previously related items of the
-// player replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Room's RoomPlayers accordingly.
-// Replaces o.R.RoomPlayers with related.
-// Sets related.R.Room's RoomPlayers accordingly.
-// Uses the global database handle.
-func (o *Player) SetRoomPlayersG(insert bool, related ...*Player) error {
-	return o.SetRoomPlayers(boil.GetDB(), insert, related...)
-}
-
-// SetRoomPlayersP removes all previously related items of the
-// player replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Room's RoomPlayers accordingly.
-// Replaces o.R.RoomPlayers with related.
-// Sets related.R.Room's RoomPlayers accordingly.
-// Panics on error.
-func (o *Player) SetRoomPlayersP(exec boil.Executor, insert bool, related ...*Player) {
-	if err := o.SetRoomPlayers(exec, insert, related...); err != nil {
-		panic(boil.WrapErr(err))
-	}
-}
-
-// SetRoomPlayersGP removes all previously related items of the
-// player replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Room's RoomPlayers accordingly.
-// Replaces o.R.RoomPlayers with related.
-// Sets related.R.Room's RoomPlayers accordingly.
-// Uses the global database handle and panics on error.
-func (o *Player) SetRoomPlayersGP(insert bool, related ...*Player) {
-	if err := o.SetRoomPlayers(boil.GetDB(), insert, related...); err != nil {
-		panic(boil.WrapErr(err))
-	}
-}
-
-// SetRoomPlayers removes all previously related items of the
-// player replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Room's RoomPlayers accordingly.
-// Replaces o.R.RoomPlayers with related.
-// Sets related.R.Room's RoomPlayers accordingly.
-func (o *Player) SetRoomPlayers(exec boil.Executor, insert bool, related ...*Player) error {
-	query := "update \"players\" set \"room_id\" = null where \"room_id\" = $1"
-	values := []interface{}{o.ID}
-	if boil.DebugMode {
-		fmt.Fprintln(boil.DebugWriter, query)
-		fmt.Fprintln(boil.DebugWriter, values)
-	}
-
-	_, err := exec.Exec(query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	if o.R != nil {
-		for _, rel := range o.R.RoomPlayers {
-			rel.RoomID.Valid = false
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.Room = nil
-		}
-
-		o.R.RoomPlayers = nil
-	}
-	return o.AddRoomPlayers(exec, insert, related...)
-}
-
-// RemoveRoomPlayersG relationships from objects passed in.
-// Removes related items from R.RoomPlayers (uses pointer comparison, removal does not keep order)
-// Sets related.R.Room.
-// Uses the global database handle.
-func (o *Player) RemoveRoomPlayersG(related ...*Player) error {
-	return o.RemoveRoomPlayers(boil.GetDB(), related...)
-}
-
-// RemoveRoomPlayersP relationships from objects passed in.
-// Removes related items from R.RoomPlayers (uses pointer comparison, removal does not keep order)
-// Sets related.R.Room.
-// Panics on error.
-func (o *Player) RemoveRoomPlayersP(exec boil.Executor, related ...*Player) {
-	if err := o.RemoveRoomPlayers(exec, related...); err != nil {
-		panic(boil.WrapErr(err))
-	}
-}
-
-// RemoveRoomPlayersGP relationships from objects passed in.
-// Removes related items from R.RoomPlayers (uses pointer comparison, removal does not keep order)
-// Sets related.R.Room.
-// Uses the global database handle and panics on error.
-func (o *Player) RemoveRoomPlayersGP(related ...*Player) {
-	if err := o.RemoveRoomPlayers(boil.GetDB(), related...); err != nil {
-		panic(boil.WrapErr(err))
-	}
-}
-
-// RemoveRoomPlayers relationships from objects passed in.
-// Removes related items from R.RoomPlayers (uses pointer comparison, removal does not keep order)
-// Sets related.R.Room.
-func (o *Player) RemoveRoomPlayers(exec boil.Executor, related ...*Player) error {
-	var err error
-	for _, rel := range related {
-		rel.RoomID.Valid = false
-		if rel.R != nil {
-			rel.R.Room = nil
-		}
-		if err = rel.Update(exec, "room_id"); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.RoomPlayers {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.RoomPlayers)
-			if ln > 1 && i < ln-1 {
-				o.R.RoomPlayers[i] = o.R.RoomPlayers[ln-1]
-			}
-			o.R.RoomPlayers = o.R.RoomPlayers[:ln-1]
-			break
-		}
-	}
-
 	return nil
 }
 

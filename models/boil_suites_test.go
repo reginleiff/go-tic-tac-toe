@@ -102,7 +102,7 @@ func TestInsert(t *testing.T) {
 // TestToOne tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOne(t *testing.T) {
-	t.Run("PlayerToPlayerUsingRoom", testPlayerToOnePlayerUsingRoom)
+	t.Run("PlayerToRoomUsingRoom", testPlayerToOneRoomUsingRoom)
 	t.Run("RoomToBoardUsingBoard", testRoomToOneBoardUsingBoard)
 	t.Run("TileToBoardUsingBoard", testTileToOneBoardUsingBoard)
 	t.Run("TileToPlayerUsingPlayer", testTileToOnePlayerUsingPlayer)
@@ -117,14 +117,14 @@ func TestOneToOne(t *testing.T) {}
 func TestToMany(t *testing.T) {
 	t.Run("BoardToRooms", testBoardToManyRooms)
 	t.Run("BoardToTiles", testBoardToManyTiles)
-	t.Run("PlayerToRoomPlayers", testPlayerToManyRoomPlayers)
 	t.Run("PlayerToTiles", testPlayerToManyTiles)
+	t.Run("RoomToPlayers", testRoomToManyPlayers)
 }
 
 // TestToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOneSet(t *testing.T) {
-	t.Run("PlayerToPlayerUsingRoom", testPlayerToOneSetOpPlayerUsingRoom)
+	t.Run("PlayerToRoomUsingRoom", testPlayerToOneSetOpRoomUsingRoom)
 	t.Run("RoomToBoardUsingBoard", testRoomToOneSetOpBoardUsingBoard)
 	t.Run("TileToBoardUsingBoard", testTileToOneSetOpBoardUsingBoard)
 	t.Run("TileToPlayerUsingPlayer", testTileToOneSetOpPlayerUsingPlayer)
@@ -133,7 +133,7 @@ func TestToOneSet(t *testing.T) {
 // TestToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOneRemove(t *testing.T) {
-	t.Run("PlayerToPlayerUsingRoom", testPlayerToOneRemoveOpPlayerUsingRoom)
+	t.Run("PlayerToRoomUsingRoom", testPlayerToOneRemoveOpRoomUsingRoom)
 	t.Run("TileToPlayerUsingPlayer", testTileToOneRemoveOpPlayerUsingPlayer)
 }
 
@@ -150,22 +150,22 @@ func TestOneToOneRemove(t *testing.T) {}
 func TestToManyAdd(t *testing.T) {
 	t.Run("BoardToRooms", testBoardToManyAddOpRooms)
 	t.Run("BoardToTiles", testBoardToManyAddOpTiles)
-	t.Run("PlayerToRoomPlayers", testPlayerToManyAddOpRoomPlayers)
 	t.Run("PlayerToTiles", testPlayerToManyAddOpTiles)
+	t.Run("RoomToPlayers", testRoomToManyAddOpPlayers)
 }
 
 // TestToManySet tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManySet(t *testing.T) {
-	t.Run("PlayerToRoomPlayers", testPlayerToManySetOpRoomPlayers)
 	t.Run("PlayerToTiles", testPlayerToManySetOpTiles)
+	t.Run("RoomToPlayers", testRoomToManySetOpPlayers)
 }
 
 // TestToManyRemove tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManyRemove(t *testing.T) {
-	t.Run("PlayerToRoomPlayers", testPlayerToManyRemoveOpRoomPlayers)
 	t.Run("PlayerToTiles", testPlayerToManyRemoveOpTiles)
+	t.Run("RoomToPlayers", testRoomToManyRemoveOpPlayers)
 }
 
 func TestReload(t *testing.T) {
