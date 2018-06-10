@@ -44,6 +44,10 @@ td.circle::after {
   color:green;
 }
 
+.hidden {
+  display: none;
+}
+
 .reset {
   background:#555;
   border:1px solid #333;
@@ -54,6 +58,14 @@ td.circle::after {
   text-transform:uppercase;
 }
 
-&:hover {
+li {
+  list-style-type: none;
+}
+
+ul {
+  list-style-type: none;
+}
+
+.hover {
   opacity:0.8;
 }
