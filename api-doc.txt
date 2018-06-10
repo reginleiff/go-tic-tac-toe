@@ -5,7 +5,7 @@
 77:  Update Room Status
 95:  Get all Tiles on a Board
 171: Update a Tile
-
+185: Clear Board State
 ---------------------- METHODS ----------------------------
 Get all Rooms
 url: 
@@ -180,6 +180,16 @@ body:
 response:
 	200: success 
 	OR 400: invalid tileid or playerId given
+
+------------------------------------------------------------
+Clear Board State
+url:
+	PUT /api/boards/:boardid
+parameters:
+	boardid int	
+response:
+	200: success
+	OR 400: invalid boardid given
 
 ------------------------------------------------------------
 
