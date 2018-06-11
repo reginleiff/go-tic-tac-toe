@@ -1,6 +1,11 @@
 $(function() {
   var player = 1; 
-  var playerId;
+  var playerId = 1; //remember to set as cookies
+  var opponentId = 2; //set to opponent in room
+  var boardId;
+  var currentRoomId;
+  var gameUpdateHandler;
+  var lobbyUpdateHandler;
   var gamePlayable = false;
   var isGameMode = false;
   var rooms = $("#rooms"); 
@@ -8,10 +13,9 @@ $(function() {
   var messages = $("#messages");
   var turn = $("#turn");
 
-  retrieveRooms();
-  setInterval(function() {
-    console.log("lmao");
-  }, 1000);
+
+  enableLobbyUpdateHandler();
+  getPlayerId();
 
   $('td').click(function() {
     console.log("gamePlayableState is %s", gamePlayable)
@@ -22,41 +26,46 @@ $(function() {
     td = $(this);
     var state = getState(td);
     if(!state) {
-      var pattern = definePatternForCurrentPlayer(player);
-      changeState(td, pattern);
-      if(checkIfPlayerWon(table, pattern)) {
-	messages.html('Player '+ player +' has won.');
-	turn.html('');
-	gamePlayable = false;
-      } else {
-	player = setNextPlayer(player);
-	displayNextPlayer(turn, player);
-      }
+      changeState(td, "cross");
+      updateDbGameState(td.attr("id"), playerId);
     } else {
-      messages.html('This box is already checked.');
+      messages.html("This box is already checked.");
     }
   });
 
   $(".reset").click(function() {
     console.log("quit");
     exitGameMode();
-    player = 1;
-    messages.html('');
+    gameEnd(null);
+    boardId = null;
+    updateDbRoomExit(currentRoomId);
+    currentRoomId = null;
+    messages.html("");
     reset(table);
     displayNextPlayer(turn, player);
     gamePlayable = false;
-    retrieveRooms();
   });
 
-  function addClickFunction(id) {
-    var tag = "#" + id; 
+  $(".clear").click(function() {
+    gamePlayable = false;
+    clearBoardState();
+  });
+
+  function addClickFunction(roomId) {
+    var tag = "#" + roomId; 
     $(document).one("click", tag, function() {
-      console.log("room id is %s", id);
       enterGameMode();
       rooms.empty();
       gamePlayable = true;
+      boardId = $(this).attr("class");
+      currentRoomId = $(this).attr("id");
+      console.log("boardId set to %s, roomId set to %s", boardId, currentRoomId);
+      disableLobbyUpdateHandler();
+      enableGameUpdateHandler();
+      console.log("HELLO the ROOM ID IS %s", $(this).attr("id"));
+      updateDbRoomEnter($(this).attr("id"));
     });
-    console.log("click function added for room %s", id);
+    //console.log("click function added for room %s", roomId);
   }
 
   function enterGameMode() {
@@ -69,22 +78,9 @@ $(function() {
     $("#lobby").removeClass("hidden");
   }
 
-  function toggleMode() {
-    var gameDiv = $("#game");
-    var lobbyDiv = $("#lobby"); 
-    if(isGameMode) {
-      gameDiv.addClass("hidden");
-      lobbyDiv.removeClass("hidden");
-    } else {
-      gameDiv.removeClass("hidden");
-      lobbyDiv.addClass("hidden");
-    }	
-    isGameMode = !isGameMode;
-  }
-
   function getState(td) {
-    console.log("tile has class %s\n", td.attr('class')) 
-    if(td.hasClass('cross') || td.hasClass('circle')) {
+    console.log("tile has class %s\n", td.attr("class")) 
+    if(td.hasClass("cross") || td.hasClass("circle")) {
       return 1;
     } else {
       return 0;
@@ -98,9 +94,9 @@ $(function() {
 
   function definePatternForCurrentPlayer(player) {
     if(player == 1) {
-      return 'cross';
+      return "cross";
     } else {
-      return 'circle';
+      return "circle";
     }
   }
 
@@ -116,23 +112,23 @@ $(function() {
     turn.html('Player turn : '+player);
   }
 
-  function checkIfPlayerWon(table, pattern) {
+  function checkIfPlayerWon(pattern) {
     var won = 0;
-    if(table.find('#tile1').hasClass(pattern) && table.find('#tile2').hasClass(pattern) && table.find('#tile3').hasClass(pattern)) {
+    if(table.find('#1').hasClass(pattern) && table.find('#2').hasClass(pattern) && table.find('#3').hasClass(pattern)) {
       won = 1;
-    } else if (table.find('#tile1').hasClass(pattern) && table.find('#tile4').hasClass(pattern) && table.find('#tile7').hasClass(pattern)) {
+    } else if (table.find('#1').hasClass(pattern) && table.find('#4').hasClass(pattern) && table.find('#7').hasClass(pattern)) {
       won = 1;
-    } else if (table.find('#tile1').hasClass(pattern) && table.find('#tile5').hasClass(pattern) && table.find('#tile9').hasClass(pattern)) {
+    } else if (table.find('#1').hasClass(pattern) && table.find('#5').hasClass(pattern) && table.find('#9').hasClass(pattern)) {
       won = 1;
-    } else if (table.find('#tile4').hasClass(pattern) && table.find('#tile5').hasClass(pattern) && table.find('#tile6').hasClass(pattern)) {
+    } else if (table.find('#4').hasClass(pattern) && table.find('#5').hasClass(pattern) && table.find('#6').hasClass(pattern)) {
       won = 1;
-    } else if (table.find('#tile7').hasClass(pattern) && table.find('#tile8').hasClass(pattern) && table.find('#tile9').hasClass(pattern)) {
+    } else if (table.find('#7').hasClass(pattern) && table.find('#8').hasClass(pattern) && table.find('#9').hasClass(pattern)) {
       won = 1;
-    } else if (table.find('#tile2').hasClass(pattern) && table.find('#tile5').hasClass(pattern) && table.find('#tile8').hasClass(pattern)) {
+    } else if (table.find('#2').hasClass(pattern) && table.find('#5').hasClass(pattern) && table.find('#8').hasClass(pattern)) {
       won = 1;
-    } else if (table.find('#tile3').hasClass(pattern) && table.find('#tile6').hasClass(pattern) && table.find('#tile9').hasClass(pattern)) {
+    } else if (table.find('#3').hasClass(pattern) && table.find('#6').hasClass(pattern) && table.find('#9').hasClass(pattern)) {
       won = 1;
-    } else if (table.find('#tile3').hasClass(pattern) && table.find('#tile5').hasClass(pattern) && table.find('#tile7').hasClass(pattern)) {
+    } else if (table.find('#3').hasClass(pattern) && table.find('#5').hasClass(pattern) && table.find('#7').hasClass(pattern)) {
       won = 1;
     }
     return won;
@@ -145,11 +141,12 @@ $(function() {
   }
 
   function retrieveRooms() {
+    rooms.empty();
     $.ajax({
       url: "http://localhost:8080/api/get/rooms",
       async: true
     }).then(function(data) {
-      console.log("retrieving rooms");
+      //console.log("retrieving rooms");
       $.each(JSON.parse(data), function(i, room) {
 	var roomElem;
 	var status;
@@ -168,13 +165,252 @@ $(function() {
 	    console.log("Error: invalid status code")
 	    break;
 	}
-	roomElem = ("<li><button type='button' id='" + room.id + "'> Room " + i + " Status:" + status + "</button></li>");
-	console.log("room %s is retrieved", room.id);
+	// board id stored as class, room id stored as id
+	roomElem 
+	  = ("<li><button type='button' class='" + room.board_id + "' id='" + room.id + "'> Room " + room.id + " Status: " + status + "</button></li>");
+	//console.log("room %s retrieved, corresponding board is %s", room.id, room.board_id);
 	addClickFunction(room.id);
 	rooms.append(roomElem);
       })
     });
   }
+
+  function retrieveTileStates(boardId) {
+    var tilesUrlQuery = "http://localhost:8080/api/get/tiles/?boardid=" + boardId;
+    var movesMade = 0;
+    $.ajax({
+      url: tilesUrlQuery,
+      async: true
+    }).then(function(data) {
+      $.each(JSON.parse(data), function(i, tile) { 
+	var tileElem; 
+	//console.log("tile retrieved with id - %s, gametile - %s, playerId - %s", tile.id, tile.game_tile, tile.player_id); 
+	if(tile.player_id == playerId) { 
+	  setTileState(tile.game_tile, 1); 
+	  movesMade++;
+	} else if (tile.player_id == null) { 
+	  setTileState(tile.game_tile, 0); 
+	} else {
+	  setTileState(tile.game_tile, 2);
+	  movesMade++;
+	}
+      })
+    })
+
+    if(checkIfPlayerWon("cross")) {
+      gameEnd(playerId);
+    } else if (checkIfPlayerWon("circle")) {
+      gameEnd(opponentId);	
+    } else if (movesMade == 9) {
+      gameEnd(null);
+    }
+  }
+
+  function gameStart() {
+    disableLobbyUpdateHandler();
+    enableGameUpdateHandler();
+    // tell first player to start
+  }
+
+  function gameEnd(winner) {
+    gamePlayable = false;
+
+    if(winner == null) {
+      messages.html("It's a draw!");
+    } else {
+      messages.html("Player " + winner + " has won!");
+    }
+
+    disableGameUpdateHandler();
+    enableLobbyUpdateHandler();
+    turn.html("");
+  }
+
+  function setTileState(gameTile, status) {
+    var targetTile = "#" + gameTile;
+    switch(status) {
+      case 0: break;
+	//console.log("tile %s is not occupied", gameTile);
+      case 1: $(targetTile).addClass("cross");
+	//console.log("tile %s set to cross", gameTile);
+	break;
+      case 2: $(targetTile).addClass("circle");
+	//console.log("tile %s set to circle", gameTile);
+	break;
+      default:
+	break;
+    }
+  }
+
+  function getPlayerId() {
+    // TODO: set player id to his cookie player id
+    return;
+  }
+
+  function enableLobbyUpdateHandler() {
+    retrieveRooms() //do 1 time first
+    if(lobbyUpdateHandler) {
+      disableLobbyUpdateHandler();
+    }
+
+    if(gameUpdateHandler) {
+      disableGameUpdateHandler();
+    }
+
+    lobbyUpdateHandler = setInterval(function() {
+      retrieveRooms();
+    }, 5000);
+    return;
+  }
+
+  function disableLobbyUpdateHandler() {
+    clearInterval(lobbyUpdateHandler);
+  }
+
+  function enableGameUpdateHandler() {
+    if (lobbyUpdateHandler) {
+      disableLobbyUpdateHandler();
+    }
+
+    if (gameUpdateHandler) {
+      disableGameUpdateHandler();
+    }
+
+    gameUpdateHandler = setInterval(function() {
+      retrieveTileStates(boardId)
+    }, 500);
+    return;
+  }
+
+  function disableGameUpdateHandler() {
+    console.log("Game update handler disabled!");
+    clearInterval(gameUpdateHandler);
+    return;
+  }
+
+  function updateDbGameState(tileId, playerId) {
+    var updateGameTileQuery = "http://localhost:8080/api/put/tiles/?tileid=" + tileId + "&playerid=" + playerId;
+    $.ajax({
+      url: updateGameTileQuery
+    }).then(function(res) {
+      console.log(res);
+    }).catch(function(err) {
+      console.log(err);
+    })
+    return;
+  }
+
+  function clearBoardState() {
+    if (boardId == null) {
+      return;
+    }
+
+    var clearBoardStateQuery = "http://localhost:8080/api/put/boards/?boardid=" + boardId;
+    $.ajax({
+      url: clearBoardStateQuery
+    }).then(function(res) {
+      console.log(res);
+    }).catch(function(err) {
+      console.log(err);
+    })
+    return;
+  }
+
+  function updateDbRoomEnter(roomId) {
+    var updatePlayersQuery = "http://localhost:8080/api/put/players/?playerid=" + playerId + "&roomid=" + roomId;
+    var getPlayersInRoomQuery = "http://localhost:8080/api/get/players/?roomid=" + roomId;
+    var newStatus;
+
+    $.ajax({
+      url: getPlayersInRoomQuery,
+      async: true
+    }).then(function(data) {
+      players = JSON.parse(data);
+      if (players == null) {
+	console.log("number of players in room is 0");
+	newStatus = 1;
+      } else {
+	console.log("number of players in room is %s", players.length);
+	switch(players.length) {
+	  case 1:
+	    newStatus = 2;
+	    break;
+	  default:
+	    retrieveRooms();
+	    return;
+	}
+      }
+
+
+      var updateRoomStatusQuery = "http://localhost:8080/api/put/rooms/?roomid=" + roomId + "&status=" + newStatus; 
+
+      $.ajax({
+	url: updateRoomStatusQuery
+      }).then(function(res) {
+	console.log(res);
+      }).catch(function(err) {
+	console.log(err);
+      })
+
+      $.ajax({
+	url: updatePlayersQuery
+      }).then(function(res) {
+	console.log(res);
+      }).catch(function(err) {
+	console.log(err);
+      })
+    })
+
+    return;
+  }
+
+  function updateDbRoomExit(roomId) {
+    var updatePlayersQuery = "http://localhost:8080/api/put/players/?playerid=" + playerId + "&roomid=NULL";
+    var getPlayersInRoomQuery = "http://localhost:8080/api/get/players/?roomid=" + roomId;
+    var newStatus;
+
+    $.ajax({
+      url: getPlayersInRoomQuery,
+      async: true
+    }).then(function(data) {
+      players = JSON.parse(data);
+      if (players == null) {
+	console.log("number of players in room is 0");
+	newStatus = 0;
+      } else {
+	console.log("number of players in room is %s", players.length);
+	switch(players.length) {
+	  case 1:
+	    newStatus = 0;
+	    break;
+	  case 2:
+	    newStatus = 1;
+	    return;
+	}
+      }
+
+      var updateRoomStatusQuery = "http://localhost:8080/api/put/rooms/?roomid=" + roomId + "&status=" + newStatus; 
+
+      $.ajax({
+	url: updateRoomStatusQuery
+      }).then(function(res) {
+	console.log(res);
+      }).catch(function(err) {
+	console.log(err);
+      })
+
+      $.ajax({
+	url: updatePlayersQuery
+      }).then(function(res) {
+	console.log(res);
+      }).catch(function(err) {
+	console.log(err);
+      })
+    })
+
+    return;  
+  }
+
 });
 
 
