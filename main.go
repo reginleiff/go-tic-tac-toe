@@ -260,7 +260,7 @@ func updatePlayerRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !doesIdExist(roomId, roomsTable) {
+	if roomId != "NULL" && !doesIdExist(roomId, roomsTable) {
 		http.Error(w, roomDoesNotExistError, http.StatusBadRequest)
 		return
 	}
