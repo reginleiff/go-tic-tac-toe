@@ -2,6 +2,7 @@
 CREATE TABLE boards (
 	PRIMARY KEY (id),
 	id		SERIAL		NOT NULL,
+	player_turn	BIT		NOT NULL,
 	created_at	TIMESTAMP	NOT NULL,
 	updated_at	TIMESTAMP	NOT NULL
 );
