@@ -8,16 +8,10 @@ import (
 	"github.com/reginleiff/go-tic-tac-toe/models"
 	"encoding/json"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 ) 
 
 var db *sql.DB
-
-const (
-	DB_USER = "m012-hb"
-	DB_NAME = "ttt_dev"
-	DB_HOST = "localhost"
-	DB_PORT = "5432"
-)
 
 const (
 	queryGetRooms = "SELECT * FROM rooms"
@@ -381,9 +375,9 @@ func updateRoomStatus(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func initDB() {
-	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=disable", DB_USER, DB_NAME, DB_HOST, DB_PORT)
-	fmt.Println(psqlInfo)
+func initDB(name, host, user, port, sslmode string) {
+	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=%s", user, name, host, port, sslmode)
+	fmt.Printf("debug (initDB): %s", psqlInfo)
 
 	var err error
 	db, err = sql.Open("postgres", psqlInfo);
@@ -391,12 +385,29 @@ func initDB() {
 	if err != nil{
 		fmt.Printf("debug (initDB): couldn't open database\n")
 		panic(err)
+		return
 	} 
 }
 
 func main() {
+	viper.SetConfigType("toml")
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
 
-	initDB()
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("debug (main): config not found...")
+		panic(err)
+		return
+	}
+	
+	dbName := viper.GetString("database.name")
+	dbHost := viper.GetString("database.host")
+	dbUser := viper.GetString("database.user")
+	dbPort := viper.GetString("database.port")
+	dbSslMode := viper.GetString("database.sslmode")
+
+	initDB(dbName, dbHost, dbUser, dbPort, dbSslMode)
 	defer db.Close()
 
 	http.Handle("/", http.FileServer(http.Dir("./assets")))
