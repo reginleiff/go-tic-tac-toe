@@ -2,11 +2,16 @@
 
 A web application featuring multiplayer online tic-tac-toe battle.
 
-## Getting Started
+## Installation
+Have the following installed for a working development environment:
+* [GoLang](https://github.com/golang/go) - Written in
+* [PostgresSQL](https://www.postgresql.org/) - Relational Database
+* [Goose](https://github.com/pressly/goose) - Database Schema Migration Tool
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+## How to run the test suite:
+No tests written as of yet.
 
-### Prerequisites
+<>### Prerequisites
 
 What things you need to install the software and how to install them
 
@@ -84,4 +89,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 * Hat tip to anyone whose code was used
 * Inspiration
-* etc
+* etc>
