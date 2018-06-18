@@ -35,7 +35,6 @@ const (
 	roomDoesNotExistError = "Bad Request: Room does not exist"
 	boardDoesNotExistError = "Bad Request: Board does not exist"
 	tileDoesNotExistError = "Bad Request: Tile does not exist"
-
 	invalidStatusCodeError = "Bad Request: Invalid status code given"	
 
 	playerRoomUpdateSuccess = "Success: Room for Player has been updated"
@@ -419,7 +418,7 @@ func main() {
 	http.HandleFunc("/api/put/players/", updatePlayerRoom)
 	http.HandleFunc("/api/put/rooms/", updateRoomStatus)
 
-	listenPortParam:= fmt.Sprintf(":%v", listenPort)
+	listenPortParam:= fmt.Sprintf("0.0.0.0:%v", listenPort)
 	fmt.Printf("debug (main): server attempting to listen on port %s\n", listenPort)
 	if err := http.ListenAndServe(listenPortParam, nil); err != nil {
 		fmt.Printf("debug (main): failed to listen on port %s\n", listenPort)
