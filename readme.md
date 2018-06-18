@@ -8,7 +8,22 @@ Have the following installed for a working development environment:
 * [PostgresSQL](https://www.postgresql.org/) - Relational Database
 * [Goose](https://github.com/pressly/goose) - Database Schema Migration Tool
 
-## How to run the test suite
-No tests written as of yet.
+## Configuration
+In the root directory, create a `config.toml` and fill it up the following:
+
+`[database]
+type = "postgres"
+name = "DATABASE_NAME"
+user = "DATABASE_USER"
+host = "localhost"
+port = "PORT_NO"
+sslmode = "disable"
+...
+`
+
+Replace quotes in caps with the relevant information.
+
+## Running the test suite
+Enter `main.go` and run `go test`. 
 
 
