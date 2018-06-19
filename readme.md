@@ -11,16 +11,18 @@ Have the following installed for a working development environment:
 ## Configuration
 In the root directory, create a `config.toml` and fill it up the following:
 
-`[database]`
-`type = "postgres"`
-`name = "DATABASE_NAME"`
-`user = "DATABASE_USER"`
-`host = "localhost"`
-`port = "PORT_NO"`
-`sslmode = "disable"`
-`[server]`
-`port = "SERVER_PORT_NO"`
+~~~~
+[database]
+type = "postgres"
+name = "DATABASE_NAME"
+user = "DATABASE_USER"
+host = "localhost"
+port = "PORT_NO"
+sslmode = "disable"
 
+[server]
+port = "SERVER_PORT_NO"
+~~~~
 
 Replace quotes in caps with the relevant information.
 

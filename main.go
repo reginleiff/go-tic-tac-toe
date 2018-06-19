@@ -405,7 +405,9 @@ func main() {
 	dbUser := viper.GetString("database.user")
 	dbPort := viper.GetString("database.port")
 	dbSslMode := viper.GetString("database.sslmode")
-	listenPort := viper.GetString("server.port")
+
+	serverIp := viper.GetString("server.ip")
+	serverPort := viper.GetString("server.port")
 
 	initDB(dbName, dbHost, dbUser, dbPort, dbSslMode)
 	defer db.Close()
@@ -418,10 +420,10 @@ func main() {
 	http.HandleFunc("/api/put/players/", updatePlayerRoom)
 	http.HandleFunc("/api/put/rooms/", updateRoomStatus)
 
-	listenPortParam:= fmt.Sprintf("0.0.0.0:%v", listenPort)
-	fmt.Printf("debug (main): server attempting to listen on port %s\n", listenPort)
+	listenPortParam:= fmt.Sprintf("%s:%v", serverIp, serverPort)
+	fmt.Printf("debug (main): server attempting to listen on ip address %s and port %s\n", serverIp, serverPort)
 	if err := http.ListenAndServe(listenPortParam, nil); err != nil {
-		fmt.Printf("debug (main): failed to listen on port %s\n", listenPort)
+		fmt.Printf("debug (main): failed to listen on port %s\n", serverPort)
 		panic(err)
 		return
 	}
