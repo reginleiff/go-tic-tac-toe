@@ -35,7 +35,7 @@ const (
 	roomDoesNotExistError = "Bad Request: Room does not exist"
 	boardDoesNotExistError = "Bad Request: Board does not exist"
 	tileDoesNotExistError = "Bad Request: Tile does not exist"
-	
+
 	invalidStatusCodeError = "Bad Request: Invalid status code given"	
 
 	playerRoomUpdateSuccess = "Success: Room for Player has been updated"
@@ -377,7 +377,7 @@ func updateRoomStatus(w http.ResponseWriter, r *http.Request) {
 
 func initDB(name, host, user, port, sslmode string) {
 	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=%s", user, name, host, port, sslmode)
-	fmt.Printf("debug (initDB): %s", psqlInfo)
+	fmt.Printf("debug (initDB): %s\n", psqlInfo)
 
 	var err error
 	db, err = sql.Open("postgres", psqlInfo);
@@ -396,16 +396,17 @@ func main() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Println("debug (main): config not found...")
+		fmt.Printf("debug (main): config not found...\n")
 		panic(err)
 		return
 	}
-	
+
 	dbName := viper.GetString("database.name")
 	dbHost := viper.GetString("database.host")
 	dbUser := viper.GetString("database.user")
 	dbPort := viper.GetString("database.port")
 	dbSslMode := viper.GetString("database.sslmode")
+	listenPort := viper.GetString("server.port")
 
 	initDB(dbName, dbHost, dbUser, dbPort, dbSslMode)
 	defer db.Close()
@@ -418,8 +419,10 @@ func main() {
 	http.HandleFunc("/api/put/players/", updatePlayerRoom)
 	http.HandleFunc("/api/put/rooms/", updateRoomStatus)
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Printf("debug (main): failed to listen on port 8080\n")
+	listenPortParam:= fmt.Sprintf(":%v", listenPort)
+	fmt.Printf("debug (main): server attempting to listen on port %s\n", listenPort)
+	if err := http.ListenAndServe(listenPortParam, nil); err != nil {
+		fmt.Printf("debug (main): failed to listen on port %s\n", listenPort)
 		panic(err)
 		return
 	}

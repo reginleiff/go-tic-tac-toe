@@ -18,6 +18,9 @@ user = "DATABASE_USER"
 host = "localhost"
 port = "PORT_NO"
 sslmode = "disable"
+
+[server]
+port = "SERVER_PORT_NO"
 ...
 `
 
