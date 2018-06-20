@@ -1,0 +1,16 @@
+version: 2
+jobs:
+  build:
+    working_directory: /go/src/github.com/reginleiff/go-tic-tac-toe
+    docker: 
+        - image: reginleiff/hb-go:latest
+    steps:
+      - checkout
+      - run:
+          name: Testing main
+          command: go test -v
+      - run: cd models
+      - run: 
+          name: Testing models
+          command: go test -v
+
