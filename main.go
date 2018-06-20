@@ -97,7 +97,7 @@ func createPlayer() (int, error) {
 	err := db.QueryRow("INSERT INTO players (created_at, updated_at) VALUES (NOW(), NOW()) RETURNING id").Scan(&id);
 
 	if err != nil {
-		fmt.Println("debug (createPlayer): error retrieving id - %s\n", err)
+		fmt.Printf("debug (createPlayer): error retrieving id - %s\n", err)
 		return 0, err
 	}
 
