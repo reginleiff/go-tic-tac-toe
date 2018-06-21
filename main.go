@@ -391,7 +391,7 @@ func initDB(name, host, user, port, sslmode string) {
 func main() {
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("./config")
 
 	err := viper.ReadInConfig()
 	if err != nil {
