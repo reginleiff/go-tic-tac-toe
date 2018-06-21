@@ -6,7 +6,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o app .
 FROM scratch
 WORKDIR /root/
 COPY --from=builder /go/src/github.com/reginleiff/go-tic-tac-toe/app .
-COPY --from=builder /go/src/github.com/reginleiff/go-tic-tac-toe/config.toml .
 EXPOSE 3000
 ENTRYPOINT ["./app"]
 
