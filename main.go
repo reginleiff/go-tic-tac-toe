@@ -25,9 +25,7 @@ const (
 )
 
 const (
-	//	playerIdNotProvidedError = "Bad Request: Player ID not provided"
 	roomIdNotProvidedError = "Bad Request: Room ID not provided"
-	//	tileIdNotProvidedError = "Bad Request: Tile ID not provided"
 	boardIdNotProvidedError = "Bad Request: Board ID not provided"
 	paramsNotProvidedError = "Bad Request: Some parameters not provided"
 
