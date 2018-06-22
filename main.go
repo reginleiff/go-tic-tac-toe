@@ -372,8 +372,8 @@ func updateRoomStatus(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func initDB(name, host, user, port, sslmode string) {
-	psqlInfo := fmt.Sprintf("user=%s dbname=%s host=%s port=%s sslmode=%s", user, name, host, port, sslmode)
+func initDB(name, host, user, port, sslmode, pass string) {
+	psqlInfo := fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s sslmode=%s", user, name, pass, host, port, sslmode)
 	fmt.Printf("debug (initDB): %s\n", psqlInfo)
 
 	var err error
@@ -402,12 +402,13 @@ func main() {
 	dbHost := viper.GetString("database.host")
 	dbUser := viper.GetString("database.user")
 	dbPort := viper.GetString("database.port")
+	dbPass := viper.GetString("database.password")
 	dbSslMode := viper.GetString("database.sslmode")
 
 	serverIp := viper.GetString("server.ip")
 	serverPort := viper.GetString("server.port")
 
-	initDB(dbName, dbHost, dbUser, dbPort, dbSslMode)
+	initDB(dbName, dbHost, dbUser, dbPort, dbSslMode, dbPass)
 	defer db.Close()
 
 	http.Handle("/", http.FileServer(http.Dir("./assets")))
