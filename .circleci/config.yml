@@ -38,6 +38,9 @@ jobs:
       enabled: true
     steps:
       - run:
+          name: Setup Database
+          command: goose -dir db/migrations/ postgres "host=149.28.144.110 port=5432 user=seannguyen password=password12 dbname=ttt sslmode=disable" up
+      - run:
           name: Deploy over SSH
           command: |
             ssh $ssh_user@$ssh_host "sudo docker pull reginleiff/gottt:latest &&
