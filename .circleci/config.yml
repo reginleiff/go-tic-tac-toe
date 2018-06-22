@@ -1,14 +1,20 @@
 version: 2
 jobs:
+  test:
+    working_directory: /go/src/github.com/reginleiff/go-tic-tac-toe
+    docker:
+      - image: reginleiff/hb-go:latest
+    steps:
+      - checkout
+      - run:
+          name: Run Go tests
+          command: go test -v #./...
   build:
     working_directory: /go/src/github.com/reginleiff/go-tic-tac-toe
     docker: 
         - image: reginleiff/hb-go:latest
     steps:
         - checkout
-        - run:
-            name: Run Go tests
-            command: go test -v #./...
         - setup_remote_docker:
             docker_layer_caching: true
         - run:
@@ -27,4 +33,34 @@ jobs:
               docker tag reginleiff/gottt:$TAG reginleiff/gottt:latest
               docker login -u $docker_user -p $docker_pass         
               docker push reginleiff/gottt
+  deploy:
+    machine:
+      enabled: true
+    steps:
+      - run:
+          name: Deploy over SSH
+          command: |
+            ssh $ssh_user@$ssh_host "sudo docker pull reginleiff/gottt:latest &&
+            sudo docker stop prod &&
+            sudo docker rm prod &&
+            sudo docker run --name prod -p 3000:3000 -d -v ~/config.toml:/root/config/config.toml reginleiff/gottt:latest"
+
+
+workflows:
+  version: 2
+  test_build_deploy:
+    jobs:
+      - test
+      - build:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
 
