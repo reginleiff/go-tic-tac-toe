@@ -143,7 +143,7 @@ $(function() {
   function retrieveRooms() {
     rooms.empty();
     $.ajax({
-      url: "http://localhost:8080/api/get/rooms",
+      url: "http://149.28.144.110/api/get/rooms",
       async: true
     }).then(function(data) {
       //console.log("retrieving rooms");
@@ -176,7 +176,7 @@ $(function() {
   }
 
   function retrieveTileStates(boardId) {
-    var tilesUrlQuery = "http://localhost:8080/api/get/tiles/?boardid=" + boardId;
+    var tilesUrlQuery = "http://149.28.144.110/api/get/tiles/?boardid=" + boardId;
     var movesMade = 0;
     $.ajax({
       url: tilesUrlQuery,
@@ -289,7 +289,7 @@ $(function() {
   }
 
   function updateDbGameState(tileId, playerId) {
-    var updateGameTileQuery = "http://localhost:8080/api/put/tiles/?tileid=" + tileId + "&playerid=" + playerId;
+    var updateGameTileQuery = "http://149.28.144.110/api/put/tiles/?tileid=" + tileId + "&playerid=" + playerId;
     $.ajax({
       url: updateGameTileQuery
     }).then(function(res) {
@@ -305,7 +305,7 @@ $(function() {
       return;
     }
 
-    var clearBoardStateQuery = "http://localhost:8080/api/put/boards/?boardid=" + boardId;
+    var clearBoardStateQuery = "http://149.28.144.110/api/put/boards/?boardid=" + boardId;
     $.ajax({
       url: clearBoardStateQuery
     }).then(function(res) {
@@ -317,8 +317,8 @@ $(function() {
   }
 
   function updateDbRoomEnter(roomId) {
-    var updatePlayersQuery = "http://localhost:8080/api/put/players/?playerid=" + playerId + "&roomid=" + roomId;
-    var getPlayersInRoomQuery = "http://localhost:8080/api/get/players/?roomid=" + roomId;
+    var updatePlayersQuery = "http://149.28.144.110/api/put/players/?playerid=" + playerId + "&roomid=" + roomId;
+    var getPlayersInRoomQuery = "http://149.28.144.110/api/get/players/?roomid=" + roomId;
     var newStatus;
 
     $.ajax({
@@ -342,7 +342,7 @@ $(function() {
       }
 
 
-      var updateRoomStatusQuery = "http://localhost:8080/api/put/rooms/?roomid=" + roomId + "&status=" + newStatus; 
+      var updateRoomStatusQuery = "http://149.28.144.110/api/put/rooms/?roomid=" + roomId + "&status=" + newStatus; 
 
       $.ajax({
 	url: updateRoomStatusQuery
@@ -365,8 +365,8 @@ $(function() {
   }
 
   function updateDbRoomExit(roomId) {
-    var updatePlayersQuery = "http://localhost:8080/api/put/players/?playerid=" + playerId + "&roomid=NULL";
-    var getPlayersInRoomQuery = "http://localhost:8080/api/get/players/?roomid=" + roomId;
+    var updatePlayersQuery = "http://149.28.144.110/api/put/players/?playerid=" + playerId + "&roomid=NULL";
+    var getPlayersInRoomQuery = "http://149.28.144.110/api/get/players/?roomid=" + roomId;
     var newStatus;
 
     $.ajax({
@@ -389,7 +389,7 @@ $(function() {
 	}
       }
 
-      var updateRoomStatusQuery = "http://localhost:8080/api/put/rooms/?roomid=" + roomId + "&status=" + newStatus; 
+      var updateRoomStatusQuery = "http://149.28.144.110/api/put/rooms/?roomid=" + roomId + "&status=" + newStatus; 
 
       $.ajax({
 	url: updateRoomStatusQuery
