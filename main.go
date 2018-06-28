@@ -1,15 +1,15 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	_ "github.com/lib/pq"
+	"github.com/reginleiff/go-tic-tac-toe/models"
+	"github.com/spf13/viper"
 	"net/http"
 	"strconv"
-	"fmt"
-	"database/sql"
-	"github.com/reginleiff/go-tic-tac-toe/models"
-	"encoding/json"
-	_ "github.com/lib/pq"
-	"github.com/spf13/viper"
-) 
+)
 
 var db *sql.DB
 
@@ -19,63 +19,63 @@ const (
 
 const (
 	playersTable = "players"
-	roomsTable = "rooms"
-	tilesTable = "tiles"	
-	boardsTable = "boards"
+	roomsTable   = "rooms"
+	tilesTable   = "tiles"
+	boardsTable  = "boards"
 )
 
 const (
-	roomIdNotProvidedError = "Bad Request: Room ID not provided"
-	boardIdNotProvidedError = "Bad Request: Board ID not provided"
-	paramsNotProvidedError = "Bad Request: Some parameters not provided"
+	roomIDNotProvidedError  = "Bad Request: Room ID not provided"
+	boardIDNotProvidedError = "Bad Request: Board ID not provided"
+	paramsNotProvidedError  = "Bad Request: Some parameters not provided"
 
 	playerDoesNotExistError = "Bad Request: Player does not exist"
-	roomDoesNotExistError = "Bad Request: Room does not exist"
-	boardDoesNotExistError = "Bad Request: Board does not exist"
-	tileDoesNotExistError = "Bad Request: Tile does not exist"
-	invalidStatusCodeError = "Bad Request: Invalid status code given"	
+	roomDoesNotExistError   = "Bad Request: Room does not exist"
+	boardDoesNotExistError  = "Bad Request: Board does not exist"
+	tileDoesNotExistError   = "Bad Request: Tile does not exist"
+	invalidStatusCodeError  = "Bad Request: Invalid status code given"
 
-	playerRoomUpdateSuccess = "Success: Room for Player has been updated"
-	roomStatusUpdateSuccess = "Success: Status for Room has been updated"
+	playerRoomUpdateSuccess  = "Success: Room for Player has been updated"
+	roomStatusUpdateSuccess  = "Success: Status for Room has been updated"
 	tileCaptureUpdateSuccess = "Success: Player for Tile has been updated"
-	boardResetSuccess = "Success: Board has been reset"
+	boardResetSuccess        = "Success: Board has been reset"
 )
 
-func doesIdExist(id string, tableName string) bool {
-	fmt.Printf("debug (doesIdExist): checking id->%s is in table->%s\n", id, tableName)
+func doesIDExist(id string, tableName string) bool {
+	fmt.Printf("debug (doesIDExist): checking id->%s is in table->%s\n", id, tableName)
 	var entryExists bool
 
 	query := fmt.Sprintf("SELECT 1 FROM %s WHERE id = %s", tableName, id)
-	fmt.Printf("debug (doesIdExist): query formed - %s\n", query)
+	fmt.Printf("debug (doesIDExist): query formed - %s\n", query)
 	err := db.QueryRow(query).Scan(&entryExists)
 
 	if err != nil {
-		fmt.Printf("debug (doesIdExist): error checking id - %s\n", err)
+		fmt.Printf("debug (doesIDExist): error checking id - %s\n", err)
 	}
 
 	return entryExists
 }
 
 func readCookies(w http.ResponseWriter, r *http.Request) {
-	var playerId string
+	var playerID string
 
 	for _, cookie := range r.Cookies() {
 		fmt.Printf("debug (readCookies): cookie name - " + cookie.Name + ", cookie value - " + cookie.Value + "\n")
-		if (cookie.Name == "player_id") {
-			playerId = cookie.Value
+		if cookie.Name == "player_id" {
+			playerID = cookie.Value
 		}
 	}
 
-	if !doesIdExist(playerId, playersTable) {
+	if !doesIDExist(playerID, playersTable) {
 		fmt.Printf("debug (readCookies): need to set cookie\n")
-		newPlayerId, err := createPlayer()
+		newPlayerID, err := createPlayer()
 
 		if err != nil {
 			fmt.Printf("debug (readCookies): error creating player\n")
 		}
 
-		fmt.Printf("debug (readCookies): id created is %v\n", newPlayerId)
-		setCookies(w, newPlayerId)
+		fmt.Printf("debug (readCookies): id created is %v\n", newPlayerID)
+		setCookies(w, newPlayerID)
 	} else {
 		fmt.Printf("debug (readCookies): cookies already set\n")
 	}
@@ -92,8 +92,8 @@ func setCookies(w http.ResponseWriter, playerID int) {
 
 func createPlayer() (int, error) {
 	var id int
-	fmt.Printf("debug (createPlayer): creating new player\n")	
-	err := db.QueryRow("INSERT INTO players (created_at, updated_at) VALUES (NOW(), NOW()) RETURNING id").Scan(&id);
+	fmt.Printf("debug (createPlayer): creating new player\n")
+	err := db.QueryRow("INSERT INTO players (created_at, updated_at) VALUES (NOW(), NOW()) RETURNING id").Scan(&id)
 
 	if err != nil {
 		fmt.Printf("debug (createPlayer): error retrieving id - %s\n", err)
@@ -110,7 +110,7 @@ func getRooms(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query(queryGetRooms)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)	
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -127,7 +127,7 @@ func getRooms(w http.ResponseWriter, r *http.Request) {
 			&room.UpdatedAt,
 		)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)	
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		rooms = append(rooms, room)
@@ -141,7 +141,7 @@ func getRooms(w http.ResponseWriter, r *http.Request) {
 	out, err := json.Marshal(rooms)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -154,23 +154,23 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 	tileParams, tileParamsOk := r.URL.Query()["boardid"]
 
 	if !tileParamsOk || len(tileParams) < 1 {
-		http.Error(w, boardIdNotProvidedError, http.StatusBadRequest)
+		http.Error(w, boardIDNotProvidedError, http.StatusBadRequest)
 		return
 	}
 
-	boardId := tileParams[0]
+	boardID := tileParams[0]
 
-	if !doesIdExist(boardId, boardsTable) {
+	if !doesIDExist(boardID, boardsTable) {
 		http.Error(w, boardDoesNotExistError, http.StatusBadRequest)
 		return
-	}	
+	}
 
-	fmt.Printf("debug (queryTiles): querying tiles with board id - %s\n", boardId)
-	query := fmt.Sprintf("SELECT * FROM tiles WHERE board_id = %s", boardId)
+	fmt.Printf("debug (queryTiles): querying tiles with board id - %s\n", boardID)
+	query := fmt.Sprintf("SELECT * FROM tiles WHERE board_id = %s", boardID)
 	rows, err := db.Query(query)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -202,7 +202,7 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 	out, err := json.Marshal(tiles)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -210,28 +210,28 @@ func getTiles(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func updateTile (w http.ResponseWriter, r *http.Request) {
-	tileParams, tileParamsOk := r.URL.Query()["tileid"]	
-	playerParams, playerParamsOk := r.URL.Query()["playerid"]	
+func updateTile(w http.ResponseWriter, r *http.Request) {
+	tileParams, tileParamsOk := r.URL.Query()["tileid"]
+	playerParams, playerParamsOk := r.URL.Query()["playerid"]
 
 	if !tileParamsOk || !playerParamsOk || len(tileParams) < 1 || len(playerParams) < 1 {
-		http.Error(w, paramsNotProvidedError, http.StatusBadRequest)	
+		http.Error(w, paramsNotProvidedError, http.StatusBadRequest)
 		return
 	}
 
-	tileId := tileParams[0]
-	playerId := playerParams[0]
+	tileID := tileParams[0]
+	playerID := playerParams[0]
 
-	if playerId != "NULL" && !doesIdExist(playerId, playersTable) {
+	if playerID != "NULL" && !doesIDExist(playerID, playersTable) {
 		http.Error(w, playerDoesNotExistError, http.StatusBadRequest)
 		return
 	}
 
-	if !doesIdExist(tileId, tilesTable) {
+	if !doesIDExist(tileID, tilesTable) {
 		http.Error(w, tileDoesNotExistError, http.StatusBadRequest)
 		return
 	}
-	query := fmt.Sprintf("UPDATE tiles SET player_id=%s WHERE id=%s", playerId, tileId)		
+	query := fmt.Sprintf("UPDATE tiles SET player_id=%s WHERE id=%s", playerID, tileID)
 	_, err := db.Exec(query)
 
 	if err != nil {
@@ -239,12 +239,12 @@ func updateTile (w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Error(w, tileCaptureUpdateSuccess, http.StatusOK)	
+	http.Error(w, tileCaptureUpdateSuccess, http.StatusOK)
 	return
 }
 
 func updatePlayerRoom(w http.ResponseWriter, r *http.Request) {
-	playerParams, playerParamsOk := r.URL.Query()["playerid"] 
+	playerParams, playerParamsOk := r.URL.Query()["playerid"]
 	roomParams, roomParamsOk := r.URL.Query()["roomid"]
 
 	if !playerParamsOk || !roomParamsOk || len(playerParams) < 1 || len(roomParams) < 1 {
@@ -252,20 +252,20 @@ func updatePlayerRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playerId := playerParams[0]
-	roomId := roomParams[0]
+	playerID := playerParams[0]
+	roomID := roomParams[0]
 
-	if !doesIdExist(playerId, playersTable) {
+	if !doesIDExist(playerID, playersTable) {
 		http.Error(w, playerDoesNotExistError, http.StatusBadRequest)
 		return
 	}
 
-	if roomId != "NULL" && !doesIdExist(roomId, roomsTable) {
+	if roomID != "NULL" && !doesIDExist(roomID, roomsTable) {
 		http.Error(w, roomDoesNotExistError, http.StatusBadRequest)
 		return
 	}
 
-	query := fmt.Sprintf("UPDATE players SET room_id=%s WHERE id=%s", roomId, playerId)
+	query := fmt.Sprintf("UPDATE players SET room_id=%s WHERE id=%s", roomID, playerID)
 	fmt.Printf("debug (updatePlayerRoom): query - %s\n", query)
 	_, err := db.Exec(query)
 
@@ -282,18 +282,18 @@ func getPlayersInRoom(w http.ResponseWriter, r *http.Request) {
 	roomParams, roomParamsOk := r.URL.Query()["roomid"]
 
 	if !roomParamsOk || len(roomParams) < 1 {
-		http.Error(w, roomIdNotProvidedError, http.StatusBadRequest)
+		http.Error(w, roomIDNotProvidedError, http.StatusBadRequest)
 		return
 	}
 
-	roomId := roomParams[0]
+	roomID := roomParams[0]
 
-	if !doesIdExist(roomId, roomsTable) {
+	if !doesIDExist(roomID, roomsTable) {
 		http.Error(w, roomDoesNotExistError, http.StatusBadRequest)
 		return
 	}
 
-	query := fmt.Sprintf("SELECT * FROM players WHERE room_id=%s", roomId)	
+	query := fmt.Sprintf("SELECT * FROM players WHERE room_id=%s", roomID)
 	rows, err := db.Query(query)
 
 	if err != nil {
@@ -303,7 +303,7 @@ func getPlayersInRoom(w http.ResponseWriter, r *http.Request) {
 
 	defer rows.Close()
 
-	var players []models.Player	
+	var players []models.Player
 
 	for rows.Next() {
 		player := models.Player{}
@@ -328,7 +328,7 @@ func getPlayersInRoom(w http.ResponseWriter, r *http.Request) {
 	out, err := json.Marshal(players)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) 
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -345,23 +345,27 @@ func updateRoomStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roomId := roomParams[0]
+	roomID := roomParams[0]
 	status := statusParams[0]
 
-	if !doesIdExist(roomId, roomsTable) {
+	if !doesIDExist(roomID, roomsTable) {
 		http.Error(w, roomDoesNotExistError, http.StatusBadRequest)
 		return
 	}
 
-	switch(status) {
-		case "0": break
-		case "1": break
-		case "2": break
-		default: http.Error(w, invalidStatusCodeError, http.StatusBadRequest)
+	switch status {
+	case "0":
+		break
+	case "1":
+		break
+	case "2":
+		break
+	default:
+		http.Error(w, invalidStatusCodeError, http.StatusBadRequest)
 		return
 	}
 
-	query := fmt.Sprintf("UPDATE rooms SET status=%s WHERE id=%s", status, roomId)
+	query := fmt.Sprintf("UPDATE rooms SET status=%s WHERE id=%s", status, roomID)
 	_, err := db.Exec(query)
 
 	if err != nil {
@@ -375,20 +379,20 @@ func updateRoomStatus(w http.ResponseWriter, r *http.Request) {
 
 func clearBoardTiles(w http.ResponseWriter, r *http.Request) {
 	boardParams, boardParamsOk := r.URL.Query()["boardid"]
-	
+
 	if !boardParamsOk || len(boardParams) < 1 {
-		http.Error(w, boardIdNotProvidedError, http.StatusBadRequest)
+		http.Error(w, boardIDNotProvidedError, http.StatusBadRequest)
 		return
 	}
 
-	boardId := boardParams[0]
+	boardID := boardParams[0]
 
-	if !doesIdExist(boardId, boardsTable) {
+	if !doesIDExist(boardID, boardsTable) {
 		http.Error(w, boardDoesNotExistError, http.StatusBadRequest)
 		return
 	}
 
-	query := fmt.Sprintf("UPDATE tiles SET player_id=NULL WHERE board_id=%s", boardId)
+	query := fmt.Sprintf("UPDATE tiles SET player_id=NULL WHERE board_id=%s", boardID)
 	_, err := db.Exec(query)
 
 	if err != nil {
@@ -405,13 +409,13 @@ func initDB(name, host, user, port, sslmode, pass string) {
 	fmt.Printf("debug (initDB): %s\n", psqlInfo)
 
 	var err error
-	db, err = sql.Open("postgres", psqlInfo);
+	db, err = sql.Open("postgres", psqlInfo)
 
-	if err != nil{
+	if err != nil {
 		fmt.Printf("debug (initDB): couldn't open database\n")
 		panic(err)
 		return
-	} 
+	}
 }
 
 func main() {
@@ -433,28 +437,27 @@ func main() {
 	dbPass := viper.GetString("database.password")
 	dbSslMode := viper.GetString("database.sslmode")
 
-	serverIp := viper.GetString("server.ip")
+	serverIP := viper.GetString("server.ip")
 	serverPort := viper.GetString("server.port")
 
 	initDB(dbName, dbHost, dbUser, dbPort, dbSslMode, dbPass)
 	defer db.Close()
 
 	http.Handle("/", http.FileServer(http.Dir("./assets")))
-	
+
 	http.HandleFunc("/api/get/rooms", getRooms)
 	http.HandleFunc("/api/get/tiles/", getTiles)
 	http.HandleFunc("/api/get/players/", getPlayersInRoom)
-	http.HandleFunc("/api/put/tiles/", updateTile)	
+	http.HandleFunc("/api/put/tiles/", updateTile)
 	http.HandleFunc("/api/put/players/", updatePlayerRoom)
 	http.HandleFunc("/api/put/rooms/", updateRoomStatus)
 	http.HandleFunc("/api/put/boards/", clearBoardTiles)
 
-	listenPortParam:= fmt.Sprintf("%s:%v", serverIp, serverPort)
-	fmt.Printf("debug (main): server attempting to listen on ip address %s and port %s\n", serverIp, serverPort)
+	listenPortParam := fmt.Sprintf("%s:%v", serverIP, serverPort)
+	fmt.Printf("debug (main): server attempting to listen on ip address %s and port %s\n", serverIP, serverPort)
 	if err := http.ListenAndServe(listenPortParam, nil); err != nil {
 		fmt.Printf("debug (main): failed to listen on port %s\n", serverPort)
 		panic(err)
 		return
 	}
 }
-
